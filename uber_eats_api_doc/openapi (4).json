@@ -1,0 +1,2095 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Uber Eats Marketplace Promotions API",
+    "description": "The Promotions API allows you to create, read and delete promotions from an Uber Eats storefront.\n\nFor API testing via Postman, ensure your application's scopes are approved, and then click [here](https://god.gw.postman.com/run-collection/29024134-0c75b446-ad57-4c4f-8484-808de20735a4?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D29024134-0c75b446-ad57-4c4f-8484-808de20735a4%26entityType%3Dcollection%26workspaceId%3De5995580-1109-4772-a883-92e9531beae5#?env%5BUber%20Eats%20Marketplace%20API%5D=W3sia2V5IjoidWJlcl9hcGlfY2xpZW50X2lkIiwidmFsdWUiOiIiLCJlbmFibGVkIjp0cnVlLCJzZXNzaW9uVmFsdWUiOiIiLCJzZXNzaW9uSW5kZXgiOjB9LHsia2V5IjoidWJlcl9hcGlfY2xpZW50X3NlY3JldCIsInZhbHVlIjoiIiwiZW5hYmxlZCI6dHJ1ZSwidHlwZSI6InNlY3JldCIsInNlc3Npb25WYWx1ZSI6IiIsInNlc3Npb25JbmRleCI6MX0seyJrZXkiOiJzdG9yZV9pZCIsInZhbHVlIjoiIiwiZW5hYmxlZCI6dHJ1ZSwic2Vzc2lvblZhbHVlIjoiIiwic2Vzc2lvbkluZGV4IjoyfSx7ImtleSI6ImJhc2VfdXJsIiwidmFsdWUiOiJodHRwczovL2FwaS51YmVyLmNvbSIsImVuYWJsZWQiOnRydWUsInR5cGUiOiJkZWZhdWx0Iiwic2Vzc2lvblZhbHVlIjoiaHR0cHM6Ly9hcGkudWJlci5jb20iLCJzZXNzaW9uSW5kZXgiOjN9LHsia2V5IjoiZWF0c19zdG9yZV90b2tlbiIsInZhbHVlIjoiIiwiZW5hYmxlZCI6dHJ1ZSwidHlwZSI6ImFueSIsInNlc3Npb25WYWx1ZSI6IiIsInNlc3Npb25JbmRleCI6NH0seyJrZXkiOiJzY29wZXMiLCJ2YWx1ZSI6IiIsImVuYWJsZWQiOnRydWUsInR5cGUiOiJkZWZhdWx0Iiwic2Vzc2lvblZhbHVlIjoiIiwic2Vzc2lvbkluZGV4Ijo1fSx7ImtleSI6Im9yZGVyX2lkIiwidmFsdWUiOiIiLCJlbmFibGVkIjp0cnVlLCJ0eXBlIjoiZGVmYXVsdCIsInNlc3Npb25WYWx1ZSI6IiIsInNlc3Npb25JbmRleCI6Nn1d) to fork the collection.\n\n# Table of contents\n- [Create Promotion](#create-promotion)\n- [Revoke Promotion](#revoke-promotion)\n- [Get Promotion](#get-promotion)\n- [Get Promotions](#get-promotions)\n"
+  },
+  "servers": [
+    {
+      "url": "https://api.uber.com"
+    }
+  ],
+  "paths": {
+    "/v1/delivery/stores/{store_id}/promotion": {
+      "post": {
+        "summary": "Create Promotion",
+        "security": [
+          {
+            "auth": [
+              "eats.store.promotion.write"
+            ]
+          }
+        ],
+        "description": "Create a promotion",
+        "operationId": "postCreatePromo",
+        "tags": [
+          "Promotion"
+        ],
+        "parameters": [
+          {
+            "name": "store_id",
+            "in": "path",
+            "description": "Create single promotion by specifying the store ID (Uber UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "single promotion metadata",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/flat_off_discount_object"
+                  },
+                  {
+                    "$ref": "#/components/schemas/free_item_discount_object"
+                  },
+                  {
+                    "$ref": "#/components/schemas/bogo_discount_object"
+                  },
+                  {
+                    "$ref": "#/components/schemas/percent_off_discount_object"
+                  },
+                  {
+                    "$ref": "#/components/schemas/menu_item_discount_object"
+                  },
+                  {
+                    "$ref": "#/components/schemas/free_delivery_discount_object"
+                  }
+                ]
+              },
+              "examples": {
+                "flatoff": {
+                  "value": {
+                    "start_time": "2023-04-10T00:00:00-07:00",
+                    "end_time": "2023-04-20T00:00:00-07:00",
+                    "external_promotion_id": "Uber_Superbowl",
+                    "user_group": "ALL_CUSTOMERS",
+                    "allow_unlimited_apply": true,
+                    "currency_code": "USD",
+                    "budget": {
+                      "unlimited_budget": true
+                    },
+                    "promo_type": "FLATOFF",
+                    "promotion_discount": {
+                      "flat_off_discount": {
+                        "min_basket_constraint": {
+                          "min_spend": {
+                            "amount": 1000
+                          }
+                        },
+                        "discount_value": {
+                          "amount": 400
+                        }
+                      }
+                    }
+                  }
+                },
+                "free_item": {
+                  "value": {
+                    "start_time": "2023-04-10T00:00:00-07:00",
+                    "end_time": "2023-04-20T00:00:00-07:00",
+                    "external_promotion_id": "Uber_Superbowl",
+                    "user_group": "ALL_CUSTOMERS",
+                    "allow_unlimited_apply": true,
+                    "currency_code": "USD",
+                    "budget": {
+                      "unlimited_budget": true
+                    },
+                    "promo_type": "FREEITEM_MINBASKET",
+                    "promotion_discount": {
+                      "free_item_discount": {
+                        "min_basket_constraint": {
+                          "min_spend": {
+                            "amount": 1000
+                          }
+                        },
+                        "free_items": [
+                          {
+                            "free_item_id": "CURLY_FRIES"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "bogo": {
+                  "value": {
+                    "start_time": "2023-04-10T00:00:00-07:00",
+                    "end_time": "2023-04-20T00:00:00-07:00",
+                    "external_promotion_id": "Uber_Superbowl",
+                    "user_group": "ALL_CUSTOMERS",
+                    "allow_unlimited_apply": true,
+                    "currency_code": "USD",
+                    "budget": {
+                      "unlimited_budget": true
+                    },
+                    "promo_type": "BOGO",
+                    "promotion_discount": {
+                      "bogo_discount": {
+                        "target_items": [
+                          {
+                            "item_external_id": "CURLY_FRIES"
+                          },
+                          {
+                            "item_external_id": "CHICKEN_NUGGETS"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "percent_off": {
+                  "value": {
+                    "start_time": "2023-04-10T00:00:00-07:00",
+                    "end_time": "2023-04-20T00:00:00-07:00",
+                    "external_promotion_id": "Uber_Superbowl",
+                    "user_group": "ALL_CUSTOMERS",
+                    "allow_unlimited_apply": true,
+                    "currency_code": "USD",
+                    "budget": {
+                      "unlimited_budget": true
+                    },
+                    "promo_type": "PERCENTOFF",
+                    "promotion_discount": {
+                      "percent_off_discount": {
+                        "min_basket_constraint": {
+                          "min_spend": {
+                            "amount": 1000
+                          }
+                        },
+                        "percent_value": 30,
+                        "max_discount_value": {
+                          "amount": 400
+                        }
+                      }
+                    }
+                  }
+                },
+                "menu_item_discount": {
+                  "value": {
+                    "start_time": "2023-04-10T00:00:00-07:00",
+                    "end_time": "2023-04-20T00:00:00-07:00",
+                    "external_promotion_id": "Uber_Superbowl",
+                    "user_group": "ALL_CUSTOMERS",
+                    "allow_unlimited_apply": true,
+                    "currency_code": "USD",
+                    "budget": {
+                      "unlimited_budget": true
+                    },
+                    "promo_type": "MENU_ITEM_DISCOUNT",
+                    "promotion_discount": {
+                      "menu_item_discount": {
+                        "item_discounts": [
+                          {
+                            "item": {
+                              "item_external_id": "CHICKEN_NUGGETS"
+                            },
+                            "discount_amount": {
+                              "percent_discount": {
+                                "percent_value": 30
+                              }
+                            }
+                          },
+                          {
+                            "item": {
+                              "item_external_id": "CURLY_FRIES"
+                            },
+                            "discount_amount": {
+                              "percent_discount": {
+                                "percent_value": 20
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "free_delivery": {
+                  "value": {
+                    "start_time": "2023-04-10T00:00:00-07:00",
+                    "end_time": "2023-04-20T00:00:00-07:00",
+                    "external_promotion_id": "Uber_Superbowl",
+                    "user_group": "ALL_CUSTOMERS",
+                    "allow_unlimited_apply": true,
+                    "currency_code": "USD",
+                    "budget": {
+                      "unlimited_budget": true
+                    },
+                    "promo_type": "FREEDELIVERY"
+                  }
+                },
+                "percent_off_with_periodic_budget": {
+                  "value": {
+                    "start_time": "2023-04-10T00:00:00-07:00",
+                    "end_time": "2023-04-20T00:00:00-07:00",
+                    "external_promotion_id": "Uber_Superbowl",
+                    "user_group": "ALL_CUSTOMERS",
+                    "allow_unlimited_apply": true,
+                    "currency_code": "USD",
+                    "budget": {
+                      "unlimited_budget": false,
+                      "periodic_budget": {
+                        "budget_amount": {
+                          "amount": 1000
+                        },
+                        "budget_period": "WEEKLY"
+                      }
+                    },
+                    "promo_type": "PERCENTOFF",
+                    "promotion_discount": {
+                      "percent_off_discount": {
+                        "min_basket_constraint": {
+                          "min_spend": {
+                            "amount": 1000
+                          }
+                        },
+                        "percent_value": 30,
+                        "max_discount_value": {
+                          "amount": 400
+                        }
+                      }
+                    }
+                  }
+                },
+                "happy_hour_promotion": {
+                  "value": {
+                    "start_time": "2023-04-10T00:00:00-07:00",
+                    "end_time": "2023-04-20T00:00:00-07:00",
+                    "external_promotion_id": "Uber_Superbowl",
+                    "user_group": "ALL_CUSTOMERS",
+                    "allow_unlimited_apply": true,
+                    "currency_code": "USD",
+                    "budget": {
+                      "unlimited_budget": false,
+                      "periodic_budget": {
+                        "budget_amount": {
+                          "amount": 1000
+                        },
+                        "budget_period": "WEEKLY"
+                      }
+                    },
+                    "promo_type": "PERCENTOFF",
+                    "promotion_discount": {
+                      "percent_off_discount": {
+                        "min_basket_constraint": {
+                          "min_spend": {
+                            "amount": 1000
+                          }
+                        },
+                        "percent_value": 30,
+                        "max_discount_value": {
+                          "amount": 400
+                        }
+                      }
+                    },
+                    "promotion_customization": {
+                      "marketing_experience_type": "HAPPY_HOUR"
+                    }
+                  }
+                },
+                "flatoff_with_uber_one_offer_campaign": {
+                  "value": {
+                    "start_time": "2023-04-10T00:00:00-07:00",
+                    "end_time": "2023-04-20T00:00:00-07:00",
+                    "external_promotion_id": "Uber_Superbowl",
+                    "user_group": "ALL_CUSTOMERS",
+                    "allow_unlimited_apply": true,
+                    "currency_code": "USD",
+                    "budget": {
+                      "unlimited_budget": true
+                    },
+                    "promo_type": "FLATOFF",
+                    "promotion_discount": {
+                      "flat_off_discount": {
+                        "min_basket_constraint": {
+                          "min_spend": {
+                            "amount": 1000
+                          }
+                        },
+                        "discount_value": {
+                          "amount": 400
+                        }
+                      }
+                    },
+                    "promotion_customization": {
+                      "engagement_campaign_type": "UBER_ONE_OFFERS"
+                    }
+                  }
+                },
+                "bogo_with_custom_schedule": {
+                  "value": {
+                    "start_time": "2023-04-10T00:00:00-07:00",
+                    "end_time": "2023-04-20T00:00:00-07:00",
+                    "external_promotion_id": "Uber_Superbowl",
+                    "user_group": "ALL_CUSTOMERS",
+                    "allow_unlimited_apply": true,
+                    "currency_code": "USD",
+                    "budget": {
+                      "unlimited_budget": true
+                    },
+                    "promo_type": "BOGO",
+                    "promotion_discount": {
+                      "bogo_discount": {
+                        "target_items": [
+                          {
+                            "item_external_id": "CURLY_FRIES"
+                          },
+                          {
+                            "item_external_id": "CHICKEN_NUGGETS"
+                          }
+                        ]
+                      }
+                    },
+                    "promotion_customization": {
+                      "custom_schedule": {
+                        "daypart_constraints": [
+                          {
+                            "hours": [
+                              {
+                                "start_hour": 10,
+                                "start_minute": 30,
+                                "end_hour": 17,
+                                "end_minute": 0
+                              },
+                              {
+                                "start_hour": 18,
+                                "start_minute": 0,
+                                "end_hour": 22,
+                                "end_minute": 0
+                              }
+                            ],
+                            "dayOfWeek": [
+                              "MONDAY",
+                              "TUESDAY",
+                              "WEDNESDAY",
+                              "THURSDAY",
+                              "FRIDAY"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Promotion created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "promotion_id": {
+                      "type": "string",
+                      "description": "Unique identifier of the promotion, generated by Uber"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/delivery/promotions/{promotion_id}/revoke": {
+      "post": {
+        "summary": "Revoke Promotion",
+        "security": [
+          {
+            "auth": [
+              "eats.store.promotion.write"
+            ]
+          }
+        ],
+        "description": "Revoke promotion by specifying the promotion ID",
+        "operationId": "postRevokePromo",
+        "tags": [
+          "Promotion"
+        ],
+        "parameters": [
+          {
+            "name": "promotion_id",
+            "in": "path",
+            "description": "Revoke single promotion by specifying the promotion ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No content"
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/delivery/promotions/{promotion_id}": {
+      "get": {
+        "summary": "Get Promotion",
+        "security": [
+          {
+            "auth": [
+              "eats.store.promotion.read"
+            ]
+          }
+        ],
+        "description": "Get single promotion metadata by specifying the promotion ID.\\\n**Note:** The Get Promotion endpoint will only return promotions that have been created by our external API. Promotions created from within a merchant's management portal will not be contained in the response.\n",
+        "operationId": "getPromotion",
+        "tags": [
+          "Promotion"
+        ],
+        "parameters": [
+          {
+            "name": "promotion_id",
+            "in": "path",
+            "description": "A unique identifier for a given promotion. This is the identifier that is expected to be quoted for support queries and is otherwise known as the ‘promotion id’.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Promotion data for singular promotion by promotion ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/flat_off_promotion"
+                    },
+                    {
+                      "$ref": "#/components/schemas/free_item_promotion"
+                    },
+                    {
+                      "$ref": "#/components/schemas/bogo_promotion"
+                    },
+                    {
+                      "$ref": "#/components/schemas/percent_off_promotion"
+                    },
+                    {
+                      "$ref": "#/components/schemas/menu_item_discount_promotion"
+                    },
+                    {
+                      "$ref": "#/components/schemas/free_delivery_promotion"
+                    }
+                  ]
+                },
+                "examples": {
+                  "flatoff": {
+                    "value": {
+                      "promotion": {
+                        "promotion_id": "bacd6f91-c8b1-42a3-bbb5-e1739325f637",
+                        "store_id": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+                        "start_time": "2023-04-10T00:00:00-07:00",
+                        "end_time": "2023-04-20T00:00:00-07:00",
+                        "created_time": "2023-04-10T00:00:00-07:00",
+                        "state": "ACTIVE",
+                        "external_promotion_id": "Uber_Superbowl",
+                        "user_group": "ALL_CUSTOMERS",
+                        "allow_unlimited_apply": true,
+                        "currency_code": "USD",
+                        "budget": {
+                          "unlimited_budget": true
+                        },
+                        "promo_type": "FLATOFF",
+                        "flat_off_discount": {
+                          "min_basket_constraint": null,
+                          "min_spend": {
+                            "amount": 1000
+                          },
+                          "discount_value": {
+                            "amount": 400
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "free_item": {
+                    "value": {
+                      "promotion": {
+                        "promotion_id": "bacd6f91-c8b1-42a3-bbb5-e1739325f637",
+                        "store_id": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+                        "start_time": "2023-04-10T00:00:00-07:00",
+                        "end_time": "2023-04-20T00:00:00-07:00",
+                        "created_time": "2023-04-10T00:00:00-07:00",
+                        "state": "ACTIVE",
+                        "external_promotion_id": "Uber_Superbowl",
+                        "user_group": "ALL_CUSTOMERS",
+                        "allow_unlimited_apply": true,
+                        "currency_code": "USD",
+                        "budget": {
+                          "unlimited_budget": true
+                        },
+                        "promo_type": "FREEITEM_MINBASKET",
+                        "free_item_discount": {
+                          "min_basket_constraint": {
+                            "min_spend": {
+                              "amount": 1000
+                            }
+                          },
+                          "free_items": [
+                            {
+                              "free_item_id": "CURLY_FRIES"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "bogo": {
+                    "value": {
+                      "promotion": {
+                        "promotion_id": "bacd6f91-c8b1-42a3-bbb5-e1739325f637",
+                        "store_id": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+                        "start_time": "2023-04-10T00:00:00-07:00",
+                        "end_time": "2023-04-20T00:00:00-07:00",
+                        "created_time": "2023-04-10T00:00:00-07:00",
+                        "state": "ACTIVE",
+                        "external_promotion_id": "Uber_Superbowl",
+                        "user_group": "ALL_CUSTOMERS",
+                        "allow_unlimited_apply": true,
+                        "currency_code": "USD",
+                        "budget": {
+                          "unlimited_budget": true
+                        },
+                        "promo_type": "BOGO",
+                        "bogo_discount": {
+                          "target_items": [
+                            {
+                              "item_external_id": "CURLY_FRIES"
+                            },
+                            {
+                              "item_external_id": "CHICKEN_NUGGETS"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "percent_off": {
+                    "value": {
+                      "promotion": {
+                        "promotion_id": "bacd6f91-c8b1-42a3-bbb5-e1739325f637",
+                        "store_id": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+                        "start_time": "2023-04-10T00:00:00-07:00",
+                        "end_time": "2023-04-20T00:00:00-07:00",
+                        "created_time": "2023-04-10T00:00:00-07:00",
+                        "state": "ACTIVE",
+                        "external_promotion_id": "Uber_Superbowl",
+                        "user_group": "ALL_CUSTOMERS",
+                        "allow_unlimited_apply": true,
+                        "currency_code": "USD",
+                        "budget": {
+                          "unlimited_budget": true
+                        },
+                        "promo_type": "PERCENTOFF",
+                        "percent_off_discount": {
+                          "min_basket_constraint": {
+                            "min_spend": {
+                              "amount": 1000
+                            }
+                          },
+                          "percent_value": 30,
+                          "max_discount_value": {
+                            "amount": 400
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "menu_item_discount": {
+                    "value": {
+                      "promotion": {
+                        "promotion_id": "bacd6f91-c8b1-42a3-bbb5-e1739325f637",
+                        "store_id": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+                        "start_time": "2023-04-10T00:00:00-07:00",
+                        "end_time": "2023-04-20T00:00:00-07:00",
+                        "created_time": "2023-04-10T00:00:00-07:00",
+                        "state": "ACTIVE",
+                        "external_promotion_id": "Uber_Superbowl",
+                        "user_group": "ALL_CUSTOMERS",
+                        "allow_unlimited_apply": true,
+                        "currency_code": "USD",
+                        "budget": {
+                          "unlimited_budget": true
+                        },
+                        "promo_type": "MENU_ITEM_DISCOUNT",
+                        "menu_item_discount": {
+                          "item_discounts": [
+                            {
+                              "item": {
+                                "item_external_id": "CHICKEN_NUGGETS"
+                              },
+                              "discount_amount": {
+                                "percent_discount": {
+                                  "percent_value": 30
+                                }
+                              }
+                            },
+                            {
+                              "item": {
+                                "item_external_id": "CURLY_FRIES"
+                              },
+                              "discount_amount": {
+                                "percent_discount": {
+                                  "percent_value": 20
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "free_delivery_discount": {
+                    "value": {
+                      "promotion": {
+                        "promotion_id": "bacd6f91-c8b1-42a3-bbb5-e1739325f637",
+                        "store_id": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+                        "start_time": "2023-04-10T00:00:00-07:00",
+                        "end_time": "2023-04-20T00:00:00-07:00",
+                        "created_time": "2023-04-10T00:00:00-07:00",
+                        "state": "ACTIVE",
+                        "external_promotion_id": "Uber_Superbowl",
+                        "user_group": "ALL_CUSTOMERS",
+                        "allow_unlimited_apply": true,
+                        "currency_code": "USD",
+                        "budget": {
+                          "unlimited_budget": true
+                        },
+                        "promo_type": "FREEDELIVERY",
+                        "free_delivery_discount": {
+                          "min_basket_constraint": {
+                            "min_spend": {
+                              "amount": 1000
+                            }
+                          },
+                          "max_discount_value": {
+                            "amount": 400
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/delivery/stores/{store_id}/promotions": {
+      "get": {
+        "summary": "Get Promotions",
+        "security": [
+          {
+            "auth": [
+              "eats.store.promotion.read"
+            ]
+          }
+        ],
+        "description": "Provides a list of all promotions existing on a store filtered on state and time range.\\\n**Note:** The Get Promotions endpoint will only return promotions that have been created by our external API. Promotions created from within a merchant's management portal will not be contained in the response.\n",
+        "operationId": "getPromotions",
+        "tags": [
+          "Promotion"
+        ],
+        "parameters": [
+          {
+            "name": "store_id",
+            "in": "path",
+            "example": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+            "description": "A unique identifier for a given store. This is the identifier that is expected to be quoted for support queries and is otherwise known as the 'store id'.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "example": "active",
+            "schema": {
+              "$ref": "#/components/schemas/state"
+            },
+            "description": "Optional. If it is specified, the result will only contain the promotions with target state."
+          },
+          {
+            "name": "time_range",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/time_range"
+            },
+            "description": "Optional.  The time_range provides a filter to enable only returning promotions live in a certain time window."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of promotions with details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/flat_off_promotion"
+                      },
+                      {
+                        "$ref": "#/components/schemas/free_item_promotion"
+                      },
+                      {
+                        "$ref": "#/components/schemas/bogo_promotion"
+                      },
+                      {
+                        "$ref": "#/components/schemas/percent_off_promotion"
+                      },
+                      {
+                        "$ref": "#/components/schemas/menu_item_discount_promotion"
+                      },
+                      {
+                        "$ref": "#/components/schemas/free_delivery_promotion"
+                      }
+                    ]
+                  }
+                },
+                "example": {
+                  "promotions": [
+                    {
+                      "promotion_id": "bacd6f91-c8b1-42a3-bbb5-e1739325f637",
+                      "store_id": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+                      "start_time": "2023-04-10T00:00:00-07:00",
+                      "end_time": "2023-04-20T00:00:00-07:00",
+                      "created_time": "2023-04-10T00:00:00-07:00",
+                      "state": "ACTIVE",
+                      "external_promotion_id": "Uber_Superbowl",
+                      "user_group": "ALL_CUSTOMERS",
+                      "allow_unlimited_apply": true,
+                      "currency_code": "USD",
+                      "budget": {
+                        "unlimited_budget": true
+                      },
+                      "promo_type": "FLATOFF",
+                      "flat_off_discount": {
+                        "min_basket_constraint": {
+                          "min_spend": {
+                            "amount": 1000
+                          }
+                        },
+                        "discount_value": {
+                          "amount": 400
+                        }
+                      }
+                    },
+                    {
+                      "promotion_id": "02f35f36-df23-4000-a4d6-4c03e9ac008e",
+                      "store_id": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+                      "start_time": "2023-04-10T00:00:00-07:00",
+                      "end_time": "2023-04-20T00:00:00-07:00",
+                      "created_time": "2023-04-10T00:00:00-07:00",
+                      "state": "ACTIVE",
+                      "external_promotion_id": "Uber_Superbowl",
+                      "user_group": "ALL_CUSTOMERS",
+                      "allow_unlimited_apply": true,
+                      "currency_code": "USD",
+                      "budget": {
+                        "unlimited_budget": true
+                      },
+                      "promo_type": "FREEITEM_MINBASKET",
+                      "free_item_discount": {
+                        "min_basket_constraint": {
+                          "min_spend": {
+                            "amount": 1000
+                          }
+                        },
+                        "free_items": [
+                          {
+                            "free_item_id": "1233442"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "promotion_id": "e0b92694-d1a0-47e7-bc95-7eeb83b1475b",
+                      "store_id": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+                      "start_time": "2023-04-10T00:00:00-07:00",
+                      "end_time": "2023-04-20T00:00:00-07:00",
+                      "created_time": "2023-04-10T00:00:00-07:00",
+                      "state": "ACTIVE",
+                      "external_promotion_id": "Uber_Superbowl",
+                      "user_group": "ALL_CUSTOMERS",
+                      "allow_unlimited_apply": true,
+                      "currency_code": "USD",
+                      "budget": {
+                        "unlimited_budget": true
+                      },
+                      "promo_type": "BOGO",
+                      "bogo_discount": {
+                        "target_items": [
+                          {
+                            "item_external_id": "CURLY_FRIES"
+                          },
+                          {
+                            "item_external_id": "CHICKEN_NUGGETS"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "promotion_id": "5c7e92bb-6a86-44c8-bdae-f8ff1b00136c",
+                      "store_id": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+                      "start_time": "2023-04-10T00:00:00-07:00",
+                      "end_time": "2023-04-20T00:00:00-07:00",
+                      "created_time": "2023-04-10T00:00:00-07:00",
+                      "state": "ACTIVE",
+                      "external_promotion_id": "Uber_Superbowl",
+                      "user_group": "ALL_CUSTOMERS",
+                      "allow_unlimited_apply": true,
+                      "currency_code": "USD",
+                      "budget": {
+                        "unlimited_budget": true
+                      },
+                      "promo_type": "PERCENTOFF",
+                      "percent_off_discount": {
+                        "min_basket_constraint": {
+                          "min_spend": {
+                            "amount": 1000
+                          }
+                        },
+                        "percent_value": 30,
+                        "max_discount_value": {
+                          "amount": 400
+                        }
+                      }
+                    },
+                    {
+                      "promotion_id": "0ee55584-d4a9-4067-b687-a1d3e80728eb",
+                      "store_id": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+                      "start_time": "2023-04-10T00:00:00-07:00",
+                      "end_time": "2023-04-20T00:00:00-07:00",
+                      "created_time": "2023-04-10T00:00:00-07:00",
+                      "state": "ACTIVE",
+                      "external_promotion_id": "Uber_Superbowl",
+                      "user_group": "ALL_CUSTOMERS",
+                      "allow_unlimited_apply": true,
+                      "currency_code": "USD",
+                      "budget": {
+                        "unlimited_budget": true
+                      },
+                      "promo_type": "MENU_ITEM_DISCOUNT",
+                      "menu_item_discount": {
+                        "item_discounts": [
+                          {
+                            "item": {
+                              "item_external_id": "CHICKEN_NUGGETS"
+                            },
+                            "discount_amount": {
+                              "percent_discount": {
+                                "percent_value": 30
+                              }
+                            }
+                          },
+                          {
+                            "item": {
+                              "item_external_id": "CURLY_FRIES"
+                            },
+                            "discount_amount": {
+                              "percent_discount": null
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "promotion_id": "7c6bd479-aa1a-4f08-b8fe-7677f20ceedf",
+                      "store_id": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+                      "start_time": "2023-04-10T00:00:00-07:00",
+                      "end_time": "2023-04-20T00:00:00-07:00",
+                      "created_time": "2023-04-10T00:00:00-07:00",
+                      "state": "ACTIVE",
+                      "external_promotion_id": "Uber_Superbowl",
+                      "user_group": "ALL_CUSTOMERS",
+                      "allow_unlimited_apply": true,
+                      "currency_code": "USD",
+                      "budget": {
+                        "unlimited_budget": true
+                      },
+                      "promo_type": "FREEDELIVERY",
+                      "free_delivery_discount": {
+                        "min_basket_constraint": {
+                          "min_spend": {
+                            "amount": 1000
+                          }
+                        },
+                        "max_discount_value": {
+                          "amount": 400
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "flat_off_promotion": {
+        "type": "object",
+        "description": "Contains information about the Promotion.",
+        "properties": {
+          "promotion_id": {
+            "type": "string",
+            "example": "bacd6f91-c8b1-42a3-bbb5-e1739325f637",
+            "description": "Unique identifier of the promotion, generated by Uber"
+          },
+          "store_id": {
+            "type": "string",
+            "example": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+            "description": "Unique identifier of the store that the promotion is tied to"
+          },
+          "start_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/start_time"
+          },
+          "end_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/end_time"
+          },
+          "created_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/created_time"
+          },
+          "state": {
+            "type": "string",
+            "$ref": "#/components/schemas/state"
+          },
+          "external_promotion_id": {
+            "type": "string",
+            "$ref": "#/components/schemas/external_promotion_id"
+          },
+          "allow_unlimited_apply": {
+            "type": "boolean",
+            "$ref": "#/components/schemas/allow_unlimited_apply"
+          },
+          "currency_code": {
+            "type": "string",
+            "$ref": "#/components/schemas/currency_code"
+          },
+          "budget": {
+            "type": "object",
+            "$ref": "#/components/schemas/budget"
+          },
+          "promo_type": {
+            "type": "string",
+            "example": "FLATOFF",
+            "enum": [
+              "FLATOFF"
+            ]
+          },
+          "flat_off_discount": {
+            "$ref": "#/components/schemas/flat_off_discount"
+          },
+          "promotion_customization": {
+            "$ref": "#/components/schemas/promotion_customization"
+          }
+        }
+      },
+      "free_item_promotion": {
+        "type": "object",
+        "description": "Contains information about the Promotion.",
+        "properties": {
+          "promotion_id": {
+            "type": "string",
+            "example": "bacd6f91-c8b1-42a3-bbb5-e1739325f637",
+            "description": "Unique identifier of the promotion, generated by Uber"
+          },
+          "store_id": {
+            "type": "string",
+            "example": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+            "description": "Unique identifier of the store that the promotion is tied to"
+          },
+          "start_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/start_time"
+          },
+          "end_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/end_time"
+          },
+          "created_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/created_time"
+          },
+          "state": {
+            "type": "string",
+            "$ref": "#/components/schemas/state"
+          },
+          "external_promotion_id": {
+            "type": "string",
+            "$ref": "#/components/schemas/external_promotion_id"
+          },
+          "allow_unlimited_apply": {
+            "type": "boolean",
+            "$ref": "#/components/schemas/allow_unlimited_apply"
+          },
+          "currency_code": {
+            "type": "string",
+            "$ref": "#/components/schemas/currency_code"
+          },
+          "budget": {
+            "type": "object",
+            "$ref": "#/components/schemas/budget"
+          },
+          "promo_type": {
+            "type": "string",
+            "example": "FREEITEM_MINBASKET",
+            "enum": [
+              "FREEITEM_MINBASKET"
+            ]
+          },
+          "free_item_discount": {
+            "$ref": "#/components/schemas/free_item_discount"
+          },
+          "promotion_customization": {
+            "$ref": "#/components/schemas/promotion_customization"
+          }
+        }
+      },
+      "bogo_promotion": {
+        "type": "object",
+        "description": "Contains information about the Promotion.",
+        "properties": {
+          "promotion_id": {
+            "type": "string",
+            "example": "bacd6f91-c8b1-42a3-bbb5-e1739325f637",
+            "description": "Unique identifier of the promotion, generated by Uber"
+          },
+          "store_id": {
+            "type": "string",
+            "example": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+            "description": "Unique identifier of the store that the promotion is tied to"
+          },
+          "start_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/start_time"
+          },
+          "end_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/end_time"
+          },
+          "created_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/created_time"
+          },
+          "state": {
+            "type": "string",
+            "$ref": "#/components/schemas/state"
+          },
+          "external_promotion_id": {
+            "type": "string",
+            "$ref": "#/components/schemas/external_promotion_id"
+          },
+          "allow_unlimited_apply": {
+            "type": "boolean",
+            "$ref": "#/components/schemas/allow_unlimited_apply"
+          },
+          "currency_code": {
+            "type": "string",
+            "$ref": "#/components/schemas/currency_code"
+          },
+          "budget": {
+            "type": "object",
+            "$ref": "#/components/schemas/budget"
+          },
+          "promo_type": {
+            "type": "string",
+            "example": "BOGO",
+            "enum": [
+              "BOGO"
+            ]
+          },
+          "bogo_discount": {
+            "$ref": "#/components/schemas/bogo_discount"
+          },
+          "promotion_customization": {
+            "$ref": "#/components/schemas/promotion_customization"
+          }
+        }
+      },
+      "percent_off_promotion": {
+        "type": "object",
+        "description": "Contains information about the Promotion.",
+        "properties": {
+          "promotion_id": {
+            "type": "string",
+            "example": "bacd6f91-c8b1-42a3-bbb5-e1739325f637",
+            "description": "Unique identifier of the promotion, generated by Uber"
+          },
+          "store_id": {
+            "type": "string",
+            "example": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+            "description": "Unique identifier of the store that the promotion is tied to"
+          },
+          "start_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/start_time"
+          },
+          "end_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/end_time"
+          },
+          "created_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/created_time"
+          },
+          "state": {
+            "type": "string",
+            "$ref": "#/components/schemas/state"
+          },
+          "external_promotion_id": {
+            "type": "string",
+            "$ref": "#/components/schemas/external_promotion_id"
+          },
+          "allow_unlimited_apply": {
+            "type": "boolean",
+            "$ref": "#/components/schemas/allow_unlimited_apply"
+          },
+          "currency_code": {
+            "type": "string",
+            "$ref": "#/components/schemas/currency_code"
+          },
+          "budget": {
+            "type": "object",
+            "$ref": "#/components/schemas/budget"
+          },
+          "promo_type": {
+            "type": "string",
+            "example": "PERCENTOFF",
+            "enum": [
+              "PERCENTOFF"
+            ]
+          },
+          "percent_off_discount": {
+            "$ref": "#/components/schemas/percent_off_discount"
+          },
+          "promotion_customization": {
+            "$ref": "#/components/schemas/promotion_customization"
+          }
+        }
+      },
+      "menu_item_discount_promotion": {
+        "type": "object",
+        "description": "Contains information about the Promotion.",
+        "properties": {
+          "promotion_id": {
+            "type": "string",
+            "example": "bacd6f91-c8b1-42a3-bbb5-e1739325f637",
+            "description": "Unique identifier of the promotion, generated by Uber"
+          },
+          "store_id": {
+            "type": "string",
+            "example": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+            "description": "Unique identifier of the store that the promotion is tied to"
+          },
+          "start_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/start_time"
+          },
+          "end_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/end_time"
+          },
+          "created_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/created_time"
+          },
+          "state": {
+            "type": "string",
+            "$ref": "#/components/schemas/state"
+          },
+          "external_promotion_id": {
+            "type": "string",
+            "$ref": "#/components/schemas/external_promotion_id"
+          },
+          "allow_unlimited_apply": {
+            "type": "boolean",
+            "$ref": "#/components/schemas/allow_unlimited_apply"
+          },
+          "currency_code": {
+            "type": "string",
+            "$ref": "#/components/schemas/currency_code"
+          },
+          "budget": {
+            "type": "object",
+            "$ref": "#/components/schemas/budget"
+          },
+          "promo_type": {
+            "type": "string",
+            "example": "MENU_ITEM_DISCOUNT",
+            "enum": [
+              "MENU_ITEM_DISCOUNT"
+            ]
+          },
+          "menu_item_discount": {
+            "$ref": "#/components/schemas/menu_item_discount"
+          },
+          "promotion_customization": {
+            "$ref": "#/components/schemas/promotion_customization"
+          }
+        }
+      },
+      "free_delivery_promotion": {
+        "type": "object",
+        "description": "Contains information about the Promotion.",
+        "properties": {
+          "promotion_id": {
+            "type": "string",
+            "example": "bacd6f91-c8b1-42a3-bbb5-e1739325f637",
+            "description": "Unique identifier of the promotion, generated by Uber"
+          },
+          "store_id": {
+            "type": "string",
+            "example": "12345f91-c8b1-42a3-bbb5-e1739325f637",
+            "description": "Unique identifier of the store that the promotion is tied to"
+          },
+          "start_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/start_time"
+          },
+          "end_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/end_time"
+          },
+          "created_time": {
+            "type": "string",
+            "$ref": "#/components/schemas/created_time"
+          },
+          "state": {
+            "type": "string",
+            "$ref": "#/components/schemas/state"
+          },
+          "external_promotion_id": {
+            "type": "string",
+            "$ref": "#/components/schemas/external_promotion_id"
+          },
+          "allow_unlimited_apply": {
+            "type": "boolean",
+            "$ref": "#/components/schemas/allow_unlimited_apply"
+          },
+          "currency_code": {
+            "type": "string",
+            "$ref": "#/components/schemas/currency_code"
+          },
+          "budget": {
+            "type": "object",
+            "$ref": "#/components/schemas/budget"
+          },
+          "promo_type": {
+            "type": "string",
+            "example": "FREEDELIVERY",
+            "enum": [
+              "FREEDELIVERY"
+            ]
+          },
+          "free_delivery_discount": {
+            "$ref": "#/components/schemas/free_delivery_discount"
+          },
+          "promotion_customization": {
+            "$ref": "#/components/schemas/promotion_customization"
+          }
+        }
+      },
+      "flat_off_discount_object": {
+        "type": "object",
+        "description": "Flat off discount promotion",
+        "properties": {
+          "start_time": {
+            "required": true,
+            "$ref": "#/components/schemas/start_time"
+          },
+          "end_time": {
+            "required": true,
+            "$ref": "#/components/schemas/end_time"
+          },
+          "external_promotion_id": {
+            "$ref": "#/components/schemas/external_promotion_id"
+          },
+          "user_group": {
+            "required": true,
+            "$ref": "#/components/schemas/user_group"
+          },
+          "allow_unlimited_apply": {
+            "$ref": "#/components/schemas/allow_unlimited_apply"
+          },
+          "budget": {
+            "required": true,
+            "$ref": "#/components/schemas/budget"
+          },
+          "promo_type": {
+            "required": true,
+            "$ref": "#/components/schemas/flat_off_promotion_type"
+          },
+          "promotion_discount": {
+            "type": "object",
+            "description": "Contains information about the Promotion Discount.",
+            "properties": {
+              "flat_off_discount": {
+                "$ref": "#/components/schemas/flat_off_discount"
+              }
+            }
+          },
+          "promotion_customization": {
+            "$ref": "#/components/schemas/promotion_customization"
+          }
+        }
+      },
+      "free_item_discount_object": {
+        "type": "object",
+        "description": "Free item discount promotion",
+        "properties": {
+          "start_time": {
+            "required": true,
+            "$ref": "#/components/schemas/start_time"
+          },
+          "end_time": {
+            "required": true,
+            "$ref": "#/components/schemas/end_time"
+          },
+          "external_promotion_id": {
+            "$ref": "#/components/schemas/external_promotion_id"
+          },
+          "user_group": {
+            "required": true,
+            "$ref": "#/components/schemas/user_group"
+          },
+          "allow_unlimited_apply": {
+            "$ref": "#/components/schemas/allow_unlimited_apply"
+          },
+          "budget": {
+            "required": true,
+            "$ref": "#/components/schemas/budget"
+          },
+          "promo_type": {
+            "required": true,
+            "$ref": "#/components/schemas/free_item_promotion_type"
+          },
+          "promotion_discount": {
+            "type": "object",
+            "description": "Contains information about the Promotion Discount.",
+            "properties": {
+              "free_item_discount": {
+                "$ref": "#/components/schemas/free_item_discount"
+              }
+            }
+          },
+          "promotion_customization": {
+            "$ref": "#/components/schemas/promotion_customization"
+          }
+        }
+      },
+      "bogo_discount_object": {
+        "type": "object",
+        "description": "Free item discount promotion",
+        "properties": {
+          "start_time": {
+            "required": true,
+            "$ref": "#/components/schemas/start_time"
+          },
+          "end_time": {
+            "required": true,
+            "$ref": "#/components/schemas/end_time"
+          },
+          "external_promotion_id": {
+            "$ref": "#/components/schemas/external_promotion_id"
+          },
+          "user_group": {
+            "required": true,
+            "$ref": "#/components/schemas/user_group"
+          },
+          "allow_unlimited_apply": {
+            "$ref": "#/components/schemas/allow_unlimited_apply"
+          },
+          "budget": {
+            "required": true,
+            "$ref": "#/components/schemas/budget"
+          },
+          "promo_type": {
+            "required": true,
+            "$ref": "#/components/schemas/bogo_promotion_type"
+          },
+          "promotion_discount": {
+            "type": "object",
+            "description": "Contains information about the Promotion Discount.",
+            "properties": {
+              "bogo_discount": {
+                "$ref": "#/components/schemas/bogo_discount"
+              }
+            }
+          },
+          "promotion_customization": {
+            "$ref": "#/components/schemas/promotion_customization"
+          }
+        }
+      },
+      "percent_off_discount_object": {
+        "type": "object",
+        "description": "Percent off promotion",
+        "properties": {
+          "start_time": {
+            "required": true,
+            "$ref": "#/components/schemas/start_time"
+          },
+          "end_time": {
+            "required": true,
+            "$ref": "#/components/schemas/end_time"
+          },
+          "external_promotion_id": {
+            "$ref": "#/components/schemas/external_promotion_id"
+          },
+          "user_group": {
+            "required": true,
+            "$ref": "#/components/schemas/user_group"
+          },
+          "allow_unlimited_apply": {
+            "$ref": "#/components/schemas/allow_unlimited_apply"
+          },
+          "budget": {
+            "required": true,
+            "$ref": "#/components/schemas/budget"
+          },
+          "promo_type": {
+            "required": true,
+            "$ref": "#/components/schemas/percent_off_promotion_type"
+          },
+          "promotion_discount": {
+            "type": "object",
+            "description": "Contains information about the Promotion Discount.",
+            "properties": {
+              "percent_off_discount": {
+                "$ref": "#/components/schemas/percent_off_discount"
+              }
+            }
+          },
+          "promotion_customization": {
+            "$ref": "#/components/schemas/promotion_customization"
+          }
+        }
+      },
+      "menu_item_discount_object": {
+        "type": "object",
+        "description": "Menu item discount promotion",
+        "properties": {
+          "start_time": {
+            "required": true,
+            "$ref": "#/components/schemas/start_time"
+          },
+          "end_time": {
+            "required": true,
+            "$ref": "#/components/schemas/end_time"
+          },
+          "external_promotion_id": {
+            "$ref": "#/components/schemas/external_promotion_id"
+          },
+          "user_group": {
+            "required": true,
+            "$ref": "#/components/schemas/user_group"
+          },
+          "allow_unlimited_apply": {
+            "$ref": "#/components/schemas/allow_unlimited_apply"
+          },
+          "budget": {
+            "required": true,
+            "$ref": "#/components/schemas/budget"
+          },
+          "promo_type": {
+            "required": true,
+            "$ref": "#/components/schemas/menu_item_discount_promotion_type"
+          },
+          "promotion_discount": {
+            "type": "object",
+            "description": "Contains information about the Promotion Discount.",
+            "properties": {
+              "menu_item_discount": {
+                "$ref": "#/components/schemas/menu_item_discount"
+              }
+            }
+          },
+          "promotion_customization": {
+            "$ref": "#/components/schemas/promotion_customization"
+          }
+        }
+      },
+      "free_delivery_discount_object": {
+        "type": "object",
+        "description": "Free Delivery promotion",
+        "properties": {
+          "start_time": {
+            "required": true,
+            "$ref": "#/components/schemas/start_time"
+          },
+          "end_time": {
+            "required": true,
+            "$ref": "#/components/schemas/end_time"
+          },
+          "external_promotion_id": {
+            "$ref": "#/components/schemas/external_promotion_id"
+          },
+          "user_group": {
+            "required": true,
+            "$ref": "#/components/schemas/user_group"
+          },
+          "allow_unlimited_apply": {
+            "$ref": "#/components/schemas/allow_unlimited_apply"
+          },
+          "budget": {
+            "required": true,
+            "$ref": "#/components/schemas/budget"
+          },
+          "promo_type": {
+            "required": true,
+            "$ref": "#/components/schemas/free_delivery_promotion_type"
+          },
+          "promotion_customization": {
+            "$ref": "#/components/schemas/promotion_customization"
+          }
+        }
+      },
+      "flat_off_promotion_type": {
+        "type": "string",
+        "example": "FLATOFF",
+        "description": "The promotion type for the flat off promotion.",
+        "enum": [
+          "FLATOFF"
+        ]
+      },
+      "free_item_promotion_type": {
+        "type": "string",
+        "example": "FREEITEM_MINBASKET",
+        "description": "The promotion type for the free item with minimum spend promotion.",
+        "enum": [
+          "FREEITEM_MINBASKET"
+        ]
+      },
+      "bogo_promotion_type": {
+        "type": "string",
+        "example": "BOGO",
+        "description": "The promotion type for the BOGO promotion.",
+        "enum": [
+          "BOGO"
+        ]
+      },
+      "percent_off_promotion_type": {
+        "type": "string",
+        "example": "PERCENTOFF",
+        "description": "The promotion type for the Percent-Off promotion.",
+        "enum": [
+          "PERCENTOFF"
+        ]
+      },
+      "menu_item_discount_promotion_type": {
+        "type": "string",
+        "example": "MENU_ITEM_DISCOUNT",
+        "description": "The promotion type for the Menu Item Discount promotion.",
+        "enum": [
+          "MENU_ITEM_DISCOUNT"
+        ]
+      },
+      "free_delivery_promotion_type": {
+        "type": "string",
+        "example": "FREEDELIVERY",
+        "description": "The promotion type for the Free Delivery promotion.",
+        "enum": [
+          "FREEDELIVERY"
+        ]
+      },
+      "external_promotion_id": {
+        "type": "string",
+        "example": "Uber_Superbowl",
+        "description": "This is the external partner's promotion ID string for reference. For example, \"Uber_Superbowl\"."
+      },
+      "allow_unlimited_apply": {
+        "type": "boolean",
+        "description": "Set true if allows the same users to redeem multiple times when the promotion is active"
+      },
+      "money": {
+        "type": "object",
+        "description": "The money representation of a charge or discount part.",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "description": "The amount of money. Please note, that an amount of 50 and a currency code of USD represents 50 pennies, since a penny is the smallest unit of currency in USD. For example, 2000 in US is 20 USD."
+          },
+          "currency_code": {
+            "type": "string",
+            "example": "USD",
+            "description": "ISO 4217 code for the currency(i.e, USD, CAD). This field is not required when creat promotion, and the query promotion reuslt will show it as reference."
+          }
+        }
+      },
+      "budget": {
+        "type": "object",
+        "description": "Budget information for a promotion.",
+        "properties": {
+          "budget_amount": {
+            "$ref": "#/components/schemas/money"
+          },
+          "unlimited_budget": {
+            "type": "boolean",
+            "description": "Set true if budget is unlimited and leave budget_amount empty. Default is false, and budget_amount needs to be set."
+          },
+          "periodic_budget": {
+            "type": "object",
+            "description": "Set this to specify periodic budget for promotion.",
+            "properties": {
+              "budget_amount": {
+                "$ref": "#/components/schemas/money"
+              },
+              "budget_period": {
+                "required": true,
+                "$ref": "#/components/schemas/budget_period"
+              }
+            }
+          }
+        }
+      },
+      "time_range": {
+        "type": "object",
+        "description": "Time range is used as optional filter to query promotion list",
+        "properties": {
+          "start_time": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-03-11T00:00:00-07:00",
+            "description": "fetch promos still live after this time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-06-26T00:00:00-07:00",
+            "description": "fetch promos that stop prior to this time"
+          }
+        }
+      },
+      "promo_type": {
+        "type": "string",
+        "description": "Promotion type. Please see more details in the corresponding discount types",
+        "enum": [
+          "FREEITEM_MINBASKET",
+          "FLATOFF",
+          "BOGO",
+          "PERCENTOFF",
+          "MENU_ITEM_DISCOUNT",
+          "FREEDELIVERY"
+        ]
+      },
+      "min_basket_constraint": {
+        "type": "object",
+        "description": "The minimum pre-tax subtotal requirement to redeem the promotion",
+        "properties": {
+          "min_spend": {
+            "$ref": "#/components/schemas/money"
+          }
+        }
+      },
+      "flat_off_discount": {
+        "type": "object",
+        "description": "When promo_type is \"FLATOFF\", please fill details for flat off discount (“Spend $x, Save $y”) in this discount object.",
+        "properties": {
+          "min_basket_constraint": {
+            "$ref": "#/components/schemas/min_basket_constraint"
+          },
+          "discount_value": {
+            "$ref": "#/components/schemas/money"
+          }
+        }
+      },
+      "free_item_discount": {
+        "type": "object",
+        "description": "When promo_type is \"FREEITEM_MINBASKET\", please fill details for free item discount (“Spend $x, Get y for free”) in this discount object.",
+        "properties": {
+          "min_basket_constraint": {
+            "$ref": "#/components/schemas/min_basket_constraint"
+          },
+          "free_items": {
+            "$ref": "#/components/schemas/free_items"
+          }
+        }
+      },
+      "bogo_discount": {
+        "type": "object",
+        "description": "When promo_type is \"BOGO\", please fill details for BOGO discount (“Buy 1, get 1 free”) in this discount object.",
+        "properties": {
+          "target_items": {
+            "$ref": "#/components/schemas/target_items"
+          }
+        }
+      },
+      "percent_off_discount": {
+        "type": "object",
+        "description": "When promo_type is \"PERCENTOFF\", please fill details for Percent-Off discount (“Spend $30, Get 30% off on the entire basket up to $20”) in this discount object.",
+        "properties": {
+          "min_basket_constraint": {
+            "$ref": "#/components/schemas/min_basket_constraint"
+          },
+          "percent_value": {
+            "type": "Integer",
+            "description": "The percentage value of the discount. For example, 30 for 30% off."
+          },
+          "max_discount_value": {
+            "$ref": "#/components/schemas/money"
+          }
+        }
+      },
+      "menu_item_discount": {
+        "type": "object",
+        "description": "When promo_type is \"MENU_ITEM_DISCOUNT\", please fill details for Menu Item Discount (“30% off on CHICKEN_NUGGETS and 20% off on CURLY_FRIES”) in this discount object.",
+        "properties": {
+          "item_discounts": {
+            "$ref": "#/components/schemas/item_discounts"
+          }
+        }
+      },
+      "free_delivery_discount": {
+        "type": "object",
+        "description": "Details for \"FREEDELIVERY\" promotion.",
+        "properties": {
+          "min_basket_constraint": {
+            "$ref": "#/components/schemas/min_basket_constraint"
+          },
+          "max_discount_value": {
+            "$ref": "#/components/schemas/money"
+          }
+        }
+      },
+      "promotion_customization": {
+        "type": "object",
+        "description": "Fill the fields here for providing promotion customization options. Example, custom schedule for promotion, Happy Hour promotion and UBER_ONE promotion.",
+        "properties": {
+          "custom_schedule": {
+            "$ref": "#/components/schemas/custom_schedule_object"
+          },
+          "marketing_experience_type": {
+            "$ref": "#/components/schemas/marketing_experience_type"
+          },
+          "engagement_campaign_type": {
+            "$ref": "#/components/schemas/engagement_campaign_type"
+          }
+        }
+      },
+      "custom_schedule_object": {
+        "type": "object",
+        "description": "Fill this to specify custom schedule constraints for promotion.",
+        "properties": {
+          "daypart_constraints": {
+            "$ref": "#/components/schemas/daypart_constraints_list"
+          }
+        }
+      },
+      "daypart_constraints_list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/daypart_constraint_object"
+        },
+        "description": "List of day-part constraints for promotion."
+      },
+      "daypart_constraint_object": {
+        "type": "object",
+        "description": "Fill this to day-part constraints for promotion.",
+        "properties": {
+          "hours": {
+            "$ref": "#/components/schemas/hours"
+          },
+          "day_of_week": {
+            "$ref": "#/components/schemas/day_of_week_list"
+          }
+        }
+      },
+      "hours": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/time_interval"
+        },
+        "description": "List of time interval for day-part constraints"
+      },
+      "day_of_week_list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/day_of_week"
+        },
+        "description": "List of days for day-part constraints. Allowed Values [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY]"
+      },
+      "time_interval": {
+        "type": "object",
+        "description": "Time interval details.",
+        "properties": {
+          "start_hour": {
+            "type": "Integer",
+            "description": "Start hour for time interval. Allowed Values [0 -23]."
+          },
+          "start_minute": {
+            "type": "Integer",
+            "description": "Start minute for time interval. Allowed Values [0 - 59]."
+          },
+          "end_hour": {
+            "type": "Integer",
+            "description": "End hour for time interval. Allowed Values [0 - 24]."
+          },
+          "end_minute": {
+            "type": "Integer",
+            "description": "End minute for time interval. Allowed Values [0 - 59]. If end_hour = 24, then end_minute must be 0 (i.e., exactly midnight)."
+          }
+        }
+      },
+      "free_items": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/free_item_id_object"
+        },
+        "description": "List of free items in \"FREE_ITEM\" promotion. Currently, we only support one free item per promotion."
+      },
+      "free_item_id_object": {
+        "type": "object",
+        "description": "The External ID of the item for free. If you want to set up free-item only for certain option of the item (i.e, \"Buy $15, Get 8-pieces chicken nuggets for free\", instead of 12 or 6 pieces options on chicken nuggets product page), and then you need to use that the external ID of specific option.",
+        "properties": {
+          "free_item_id": {
+            "type": "string",
+            "description": "The External ID of the item for free"
+          }
+        }
+      },
+      "target_items": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/item_id_object"
+        },
+        "description": "List of target items in \"BOGO\" promotion."
+      },
+      "item_discounts": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/item_discount_object"
+        },
+        "description": "List of item discounts in \"MENU_ITEM_DISCOUNT\" promotion."
+      },
+      "item_id_object": {
+        "type": "object",
+        "description": "The External ID of the item.",
+        "properties": {
+          "item_external_id": {
+            "type": "string",
+            "description": "The External ID of the item"
+          }
+        }
+      },
+      "item_discount_object": {
+        "type": "object",
+        "description": "The discount details for item in MENU_ITEM_DISCOUNT promotion.",
+        "properties": {
+          "item": {
+            "$ref": "#/components/schemas/item_id_object"
+          },
+          "discount_amount": {
+            "$ref": "#/components/schemas/discount_amount"
+          }
+        }
+      },
+      "discount_amount": {
+        "type": "object",
+        "description": "The discount amount details for item.",
+        "properties": {
+          "percent_discount": {
+            "$ref": "#/components/schemas/percent_object"
+          }
+        }
+      },
+      "percent_object": {
+        "type": "object",
+        "description": "The percent discount details.",
+        "properties": {
+          "percent_value": {
+            "type": "Integer",
+            "description": "The percentage value of the discount. For example, 30 for 30% off."
+          }
+        }
+      },
+      "state": {
+        "type": "string",
+        "description": "Six available states for promotions (active, pending, completed, revoked, expired, deleted).",
+        "enum": [
+          "active",
+          "pending",
+          "completed",
+          "revoked",
+          "expired",
+          "deleted"
+        ]
+      },
+      "user_group": {
+        "type": "string",
+        "description": "Distinguishes the user type. If FIRST_TIME_CUSTOMERS is selected, then the promotion can only be viewed by users who have never placed any order in this store.",
+        "enum": [
+          "ALL_CUSTOMERS",
+          "FIRST_TIME_CUSTOMERS"
+        ]
+      },
+      "budget_period": {
+        "type": "string",
+        "description": "Distinguishes the budget period. Only 'WEEKLY' budget period is supported for now",
+        "enum": [
+          "WEEKLY"
+        ]
+      },
+      "marketing_experience_type": {
+        "type": "string",
+        "description": "The marketing experience type for the promotion. If HAPPY_HOUR is selected, then the promotion can only be viewed by users during the happy hour period (2:00 PM - 5:00 PM). As of now, the HAPPY_HOUR market experience type is only supported for promotions of type \"PERCENTOFF\". Other promotion types are not compatible with this experience.",
+        "enum": [
+          "HAPPY_HOUR"
+        ]
+      },
+      "engagement_campaign_type": {
+        "type": "string",
+        "description": "The engagement campaign type for the promotion. If UBER_ONE_OFFERS is selected, then the promotion will be applicable for only Uber-One members.",
+        "enum": [
+          "UBER_ONE_OFFERS"
+        ]
+      },
+      "day_of_week": {
+        "type": "string",
+        "description": "Day of the week for day-part constraints. Allowed Values [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY]",
+        "enum": [
+          "MONDAY",
+          "TUESDAY",
+          "WEDNESDAY",
+          "THURSDAY",
+          "FRIDAY",
+          "SATURDAY",
+          "SUNDAY"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "description": "bad_request",
+        "properties": {
+          "metadata": {
+            "type": "object",
+            "description": "Error message not standardized. Application code will provide contextual error message​"
+          }
+        }
+      },
+      "error_response": {
+        "type": "object",
+        "description": "Payload returned for unsuccessful API transactions.",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "Unauthorized",
+            "description": "Description of the error."
+          },
+          "message": {
+            "type": "string",
+            "example": "Invalid OAuth 2.0 credentials provided. | Error message not standardized. Application code will provide contextual error message.",
+            "description": "Description details of the error."
+          }
+        }
+      },
+      "start_time": {
+        "type": "string",
+        "format": "date-time",
+        "example": "2023-04-10T00:00:00-07:00",
+        "description": "Start time of merchant UTC time in the format of RFC-3339"
+      },
+      "end_time": {
+        "type": "string",
+        "format": "date-time",
+        "example": "2023-04-20T00:00:00-07:00",
+        "description": "End time of merchant UTC time in the format of RFC-3339"
+      },
+      "created_time": {
+        "type": "string",
+        "format": "date-time",
+        "example": "2023-04-10T00:00:00-07:00",
+        "description": "Created time of merchant UTC time in the format of RFC-3339"
+      },
+      "currency_code": {
+        "type": "string",
+        "example": "USD",
+        "description": "The currency in which the order has taken place."
+      }
+    },
+    "securitySchemes": {
+      "auth": {
+        "type": "oauth2",
+        "description": "This API uses OAuth 2 with the implicit grant flow. [More info](https://developer.uber.com/docs/eats/guides/authentication)",
+        "flows": {
+          "implicit": {
+            "authorizationUrl": "https://auth.uber.com/oauth/v2/token",
+            "scopes": {
+              "eats.store": "Indicates a token has permission to update and retrieve store and menu information.",
+              "eats.store.promotion.read": "Indicates a token has permission to read promotions.",
+              "eats.store.promotion.write": "Indicates a token has permission to create or revoke promotions.",
+              "eats.pos_provisioning": "Indicates a token has permission to setup/remove pos integration and retrieve stores."
+            }
+          }
+        }
+      }
+    }
+  }
+}
