@@ -3,7 +3,15 @@ from __future__ import annotations
 from enum import Enum
 from typing import Optional, List
 
-from api.models.common import UberEatsBaseModel, PaginationData
+from app.models.common import UberEatsBaseModel, PaginationData
+
+__all__ = [
+    "OnboardingStatus", "StoreStatusEnum", "MerchantType", "DelayType",
+    "Contact", "Location", "PreparationTimeDelayStatus", "PrepDelay",
+    "PreparationTimes", "OOIEligibility", "OOIConfig", "PriceAdjustmentConfig",
+    "FulfillmentTypeAvailability", "UberMerchantTypeInfo",
+    "Store", "StoreList", "StoreStatusResponse",
+]
 
 
 # ---------------------------------------------------------------------------

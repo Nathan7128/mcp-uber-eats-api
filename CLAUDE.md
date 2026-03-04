@@ -6,8 +6,15 @@ Wrapper Python de l'API Uber Eats basé sur 5 fichiers OpenAPI JSON situés dans
 
 **Environnement :**
 - Python 3.12+
-- Dépendances : `requests`, `pydantic>=2.0`, `dotenv`
+- Dépendances : `requests`, `pydantic>=2.0`, `python-dotenv>=1.0.0`, `fastapi>=0.115.0`, `uvicorn[standard]>=0.30.0`
 - Gestionnaire de packages : `uv` (fichier `uv.lock` présent)
+- Binaire uv installé dans `~/.local/bin/uv` (à ajouter au PATH si absent)
+
+**Démarrage du serveur FastAPI :**
+```bash
+uv run uvicorn app.main:app --reload
+# Swagger UI disponible sur http://localhost:8000/docs
+```
 
 **Variables d'environnement** (fichier `.env`) :
 - `UBER_EATS_API_CALLS_DOMAIN` — base URL de l'API (sandbox : `https://test-api.uber.com`)
@@ -20,28 +27,31 @@ Wrapper Python de l'API Uber Eats basé sur 5 fichiers OpenAPI JSON situés dans
 ## Structure du projet
 
 ```
-api/
-├── __init__.py                  # exporte UberEatsClient, UberEatsAPIError
-├── client.py                    # client HTTP de base (session, auth, gestion d'erreurs)
+app/
+├── __init__.py          # exporte UberEatsClient, UberEatsAPIError
+├── client.py            # client HTTP de base (session, auth, gestion d'erreurs)
+├── main.py              # FastAPI entry point — montage des routers + exception handler UberEatsAPIError
+├── dependencies.py      # get_client() — singleton UberEatsClient via lru_cache
 ├── models/
-│   ├── __init__.py              # exporte tous les modèles
-│   ├── common.py                # UberEatsBaseModel, CurrencyAmount, Money, PaginationData
-│   ├── stores.py                # Store, StoreList, StoreStatusResponse + enums
-│   ├── orders.py                # RestaurantOrder, OrderList, Order, Cart, Item... + enums
-│   └── promotions.py            # BasePromotion, FlatOffPromotion, PercentOffPromotion... + parse_promotion()
+│   ├── __init__.py      # exporte tous les modèles
+│   ├── common.py        # UberEatsBaseModel, CurrencyAmount, Money, PaginationData
+│   ├── stores.py        # Store, StoreList, StoreStatusResponse + enums
+│   ├── orders.py        # RestaurantOrder, OrderList, Order, Cart, Item... + enums
+│   └── promotions.py   # BasePromotion, FlatOffPromotion, PercentOffPromotion... + parse_promotion()
+├── routers/
+│   ├── __init__.py
+│   ├── stores.py        # GET /stores, GET /stores/{id}, GET /stores/{id}/status
+│   ├── orders.py        # GET /orders/{id}, GET /stores/{id}/orders
+│   └── promotions.py   # GET /promotions/{id}, GET /stores/{id}/promotions
 └── services/
     ├── __init__.py
-    ├── stores.py                # StoresService — Store API (7 endpoints)
-    ├── orders.py                # OrdersService — Order Fulfillment API (10 endpoints)
-    ├── delivery.py              # DeliveryService — Delivery Partner / DMC (1 endpoint)
-    ├── byoc.py                  # BYOCService — Bring Your Own Courier (1 endpoint)
-    └── promotions.py            # PromotionsService — Promotions API (4 endpoints + helpers)
+    ├── stores.py        # StoresService — Store API (7 endpoints)
+    ├── orders.py        # OrdersService — Order Fulfillment API (10 endpoints)
+    └── promotions.py   # PromotionsService — Promotions API (4 endpoints + helpers)
 
 uber_eats_api_doc/
 ├── openapi.json                 # Store API
 ├── openapi (1).json             # Order Fulfillment API
-├── openapi (2).json             # Delivery Partner API
-├── openapi (3).json             # BYOC Delivery API
 └── openapi (4).json             # Promotions API
 ```
 
@@ -49,20 +59,20 @@ uber_eats_api_doc/
 
 ## Architecture
 
-### Client (`api/client.py`)
+### Client (`app/client.py`)
 
 `UberEatsClient` gère :
 - La session `requests` avec header `Authorization: Bearer <token>` automatique
 - Les méthodes `get()`, `post()`, `delete()` qui retournent des `dict`
 - La levée de `UberEatsAPIError` (avec `status_code`, `code`, `message`, `metadata`) pour tout statut HTTP non-2xx
-- L'accès lazy aux services via des propriétés : `client.stores`, `client.orders`, `client.delivery`, `client.byoc`, `client.promotions`
+- L'accès lazy aux services via des propriétés : `client.stores`, `client.orders`, `client.promotions`
 
 ```python
-from api import UberEatsClient, UberEatsAPIError
+from app import UberEatsClient, UberEatsAPIError
 client = UberEatsClient()  # lit le .env automatiquement
 ```
 
-### Modèles (`api/models/`)
+### Modèles (`app/models/`)
 
 Tous les modèles héritent de `UberEatsBaseModel` (Pydantic v2) :
 - `extra="ignore"` — champs inconnus de l'API silencieusement ignorés
@@ -79,7 +89,7 @@ Tous les modèles héritent de `UberEatsBaseModel` (Pydantic v2) :
 - `Order.primary_customer` → `Customer | None`
 - `Order.item_count` → int
 
-### Services (`api/services/`)
+### Services (`app/services/`)
 
 Chaque service reçoit le `client` en constructeur et appelle `Model.model_validate(data)` sur les réponses.
 
@@ -98,8 +108,6 @@ Chaque service reçoit le `client` en constructeur et appelle `Model.model_valid
 | promotions | `get()` | `BasePromotion` (sous-type selon `promo_type`) |
 | promotions | `list()` | `PromotionList` |
 | promotions | `revoke()` | `dict` |
-| delivery | `update_partner_count()` | `dict` |
-| byoc | `ingest_courier_location()` | `dict` |
 
 **Helpers statiques sur `PromotionsService` :** `flat_off()`, `percent_off()`, `free_delivery()` pour construire les payloads de promotion.
 
@@ -111,11 +119,34 @@ Chaque service reçoit le `client` en constructeur et appelle `Model.model_valid
 |-----------------|-----|----------|
 | `openapi.json` | Marketplace Store API | `https://api.uber.com` |
 | `openapi (1).json` | Order Fulfillment API | `https://api.uber.com` |
-| `openapi (2).json` | Delivery Partner API | `https://api.uber.com` |
-| `openapi (3).json` | Delivery BYOC API | `https://api.uber.com` |
 | `openapi (4).json` | Marketplace Promotions API | `https://api.uber.com` |
 
-**Scopes OAuth :** `eats.store`, `eats.order`, `eats.store.orders.read`, `delivery.multiple.courier`, `eats.byoc.position`, `eats.store.promotion.write`
+**Scopes OAuth :** `eats.store`, `eats.order`, `eats.store.orders.read`, `eats.store.promotion.write`
+
+---
+
+## Couche FastAPI (`app/`)
+
+### Architecture
+- `app/dependencies.py` — `get_client()` retourne un singleton `UberEatsClient` via `@lru_cache`. À injecter avec `Depends(get_client)` dans chaque endpoint.
+- `app/main.py` — crée l'app FastAPI, enregistre un `exception_handler` pour `UberEatsAPIError` (mappe sur `JSONResponse` avec le `status_code` Uber), inclut les 3 routers.
+- Les modèles `app/models/` sont réutilisés directement comme `response_model` FastAPI (Pydantic v2 compatible).
+
+### Endpoints exposés (GET uniquement)
+| Méthode | Path | Service | response_model |
+|---------|------|---------|---------------|
+| GET | `/stores` | `stores.list()` | `StoreList` |
+| GET | `/stores/{store_id}` | `stores.get()` | `Store` |
+| GET | `/stores/{store_id}/status` | `stores.get_status()` | `StoreStatusResponse` |
+| GET | `/orders/{order_id}` | `orders.get()` | `RestaurantOrder` |
+| GET | `/stores/{store_id}/orders` | `orders.list()` | `OrderList` |
+| GET | `/promotions/{promotion_id}` | `promotions.get()` | `BasePromotion` |
+| GET | `/stores/{store_id}/promotions` | `promotions.list()` | `PromotionList` |
+
+### Conventions routers
+- Chaque endpoint a une `description` orientée action (pour futur MCP)
+- `Path(description=...)` sur les path params, `Query(description=...)` sur les query params
+- Les valeurs possibles des enums sont documentées dans la description du paramètre
 
 ---
 
@@ -124,5 +155,6 @@ Chaque service reçoit le `client` en constructeur et appelle `Model.model_valid
 - Ne pas modifier `UberEatsBaseModel` (extra="ignore" est intentionnel)
 - Les nouveaux services doivent suivre le même pattern : importer les modèles au top-level (pas dans `TYPE_CHECKING`), retourner `Model.model_validate(data)`
 - Les nouveaux modèles doivent hériter de `UberEatsBaseModel` et avoir tous les champs `Optional`
-- `api/models/__init__.py` doit être mis à jour à chaque nouveau modèle
+- `app/models/__init__.py` doit être mis à jour à chaque nouveau modèle
 - Le préfixe `Bearer` est ajouté automatiquement dans `client.py` — ne pas l'inclure dans le token du `.env`
+- Les nouveaux endpoints FastAPI (GET) suivent le pattern : `Depends(get_client)` + `response_model` explicite + descriptions détaillées

@@ -8,12 +8,12 @@ Lance avec :
 
 import unittest
 
-from api.models.orders import (
+from app.models.orders import (
     AdjustPriceResponse,
     OrderList,
     RestaurantOrder,
 )
-from api.models.promotions import (
+from app.models.promotions import (
     BasePromotion,
     CreatePromotionResponse,
     FlatOffPromotion,
@@ -21,7 +21,7 @@ from api.models.promotions import (
     PercentOffPromotion,
     PromotionList,
 )
-from api.models.stores import Store, StoreList, StoreStatusResponse
+from app.models.stores import Store, StoreList, StoreStatusResponse
 from tests import fixtures
 from tests.mock_client import MockUberEatsClient
 
@@ -90,7 +90,7 @@ class TestStoresService(unittest.TestCase):
         self.assertTrue(result.is_online)
 
     def test_get_status_enum_value(self):
-        from api.models.stores import StoreStatusEnum
+        from app.models.stores import StoreStatusEnum
         result = self.client.stores.get_status(fixtures.STORE_ID)
         self.assertEqual(result.status, StoreStatusEnum.ONLINE)
 
@@ -155,7 +155,7 @@ class TestOrdersService(unittest.TestCase):
         self.assertEqual(order.display_id, "#1042")
 
     def test_get_order_state_and_status(self):
-        from api.models.orders import OrderState, OrderStatus
+        from app.models.orders import OrderState, OrderStatus
         result = self.client.orders.get(fixtures.ORDER_ID)
         self.assertEqual(result.order.state, OrderState.ACCEPTED)
         self.assertEqual(result.order.status, OrderStatus.ACTIVE)
@@ -179,7 +179,7 @@ class TestOrdersService(unittest.TestCase):
     # --- deliveries ---
 
     def test_order_delivery_status(self):
-        from api.models.orders import DeliveryStatus
+        from app.models.orders import DeliveryStatus
         result = self.client.orders.get(fixtures.ORDER_ID)
         delivery = result.order.deliveries[0]
         self.assertEqual(delivery.status, DeliveryStatus.EN_ROUTE_TO_PICKUP)
@@ -295,7 +295,7 @@ class TestPromotionsService(unittest.TestCase):
         self.assertIsNotNone(result.flat_off_discount)
 
     def test_get_promotion_state(self):
-        from api.models.promotions import PromotionState
+        from app.models.promotions import PromotionState
         result = self.client.promotions.get(fixtures.PROMO_ID_FLAT)
         self.assertEqual(result.state, PromotionState.ACTIVE)
 
@@ -333,7 +333,7 @@ class TestPromotionsService(unittest.TestCase):
     # --- static helper methods ---
 
     def test_flat_off_helper_builds_correct_payload(self):
-        from api.services.promotions import PromotionsService
+        from app.services.promotions import PromotionsService
         payload = PromotionsService.flat_off(
             start_time="2026-03-01T00:00:00Z",
             end_time="2026-03-31T23:59:59Z",
@@ -349,7 +349,7 @@ class TestPromotionsService(unittest.TestCase):
         )
 
     def test_percent_off_helper_builds_correct_payload(self):
-        from api.services.promotions import PromotionsService
+        from app.services.promotions import PromotionsService
         payload = PromotionsService.percent_off(
             start_time="2026-03-01T00:00:00Z",
             end_time="2026-03-31T23:59:59Z",
@@ -360,7 +360,7 @@ class TestPromotionsService(unittest.TestCase):
         self.assertEqual(payload["percent_off_discount"]["percent_value"], 20)
 
     def test_free_delivery_helper_builds_correct_payload(self):
-        from api.services.promotions import PromotionsService
+        from app.services.promotions import PromotionsService
         payload = PromotionsService.free_delivery(
             start_time="2026-03-01T00:00:00Z",
             end_time="2026-03-31T23:59:59Z",
@@ -376,7 +376,7 @@ class TestPromotionsService(unittest.TestCase):
 
 def PromotionsService_flat_off_helper() -> dict:
     """Helper local pour construire un payload FLATOFF sans importer le service."""
-    from api.services.promotions import PromotionsService
+    from app.services.promotions import PromotionsService
     return PromotionsService.flat_off(
         start_time="2026-03-01T00:00:00Z",
         end_time="2026-03-31T23:59:59Z",

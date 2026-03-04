@@ -5,7 +5,17 @@ from typing import Optional, List, Any
 
 from pydantic import model_validator
 
-from api.models.common import UberEatsBaseModel, Money
+from app.models.common import UberEatsBaseModel, Money
+
+__all__ = [
+    "PromoType", "PromotionState", "UserGroup", "DayOfWeek", "BudgetPeriod",
+    "TimeRange", "DaypartConstraint", "Budget", "PromotionCustomization", "MinBasketConstraint",
+    "FlatOffDiscount", "PercentOffDiscount", "BOGODiscount", "FreeItemDiscount",
+    "ItemDiscount", "MenuItemDiscount",
+    "BasePromotion", "FlatOffPromotion", "PercentOffPromotion", "BOGOPromotion",
+    "FreeItemPromotion", "FreeDeliveryPromotion", "MenuItemDiscountPromotion",
+    "CreatePromotionResponse", "PromotionList", "parse_promotion",
+]
 
 
 # ---------------------------------------------------------------------------

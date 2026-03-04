@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from api.models.promotions import (
+from app.models.promotions import (
     BasePromotion,
     CreatePromotionResponse,
     PromotionList,
@@ -9,7 +9,7 @@ from api.models.promotions import (
 )
 
 if TYPE_CHECKING:
-    from api.client import UberEatsClient
+    from app.client import UberEatsClient
 
 
 class PromotionsService:

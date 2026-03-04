@@ -36,8 +36,6 @@ class UberEatsClient:
         # Lazy-loaded service instances
         self._stores = None
         self._orders = None
-        self._delivery = None
-        self._byoc = None
         self._promotions = None
 
     # ------------------------------------------------------------------
@@ -89,34 +87,20 @@ class UberEatsClient:
     @property
     def stores(self):
         if self._stores is None:
-            from api.services.stores import StoresService
+            from app.services.stores import StoresService
             self._stores = StoresService(self)
         return self._stores
 
     @property
     def orders(self):
         if self._orders is None:
-            from api.services.orders import OrdersService
+            from app.services.orders import OrdersService
             self._orders = OrdersService(self)
         return self._orders
 
     @property
-    def delivery(self):
-        if self._delivery is None:
-            from api.services.delivery import DeliveryService
-            self._delivery = DeliveryService(self)
-        return self._delivery
-
-    @property
-    def byoc(self):
-        if self._byoc is None:
-            from api.services.byoc import BYOCService
-            self._byoc = BYOCService(self)
-        return self._byoc
-
-    @property
     def promotions(self):
         if self._promotions is None:
-            from api.services.promotions import PromotionsService
+            from app.services.promotions import PromotionsService
             self._promotions = PromotionsService(self)
         return self._promotions

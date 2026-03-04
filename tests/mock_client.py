@@ -13,7 +13,7 @@ Usage:
 import copy
 import re
 
-from api.client import UberEatsClient
+from app.client import UberEatsClient
 from tests import fixtures
 
 # ---------------------------------------------------------------------------

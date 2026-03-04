@@ -1,10 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from api.models.stores import Store, StoreList, StoreStatusResponse
+from app.models.stores import Store, StoreList, StoreStatusResponse
 
 if TYPE_CHECKING:
-    from api.client import UberEatsClient
+    from app.client import UberEatsClient
 
 
 class StoresService:
