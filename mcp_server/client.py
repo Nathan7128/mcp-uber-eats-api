@@ -33,11 +33,6 @@ class UberEatsClient:
             "Content-Type": "application/json",
         })
 
-        # Lazy-loaded service instances
-        self._stores = None
-        self._orders = None
-        self._promotions = None
-
     # ------------------------------------------------------------------
     # Low-level request helpers
     # ------------------------------------------------------------------
@@ -80,27 +75,3 @@ class UberEatsClient:
             return {}
         return response.json()
 
-    # ------------------------------------------------------------------
-    # Service accessors
-    # ------------------------------------------------------------------
-
-    @property
-    def stores(self):
-        if self._stores is None:
-            from app.services.stores import StoresService
-            self._stores = StoresService(self)
-        return self._stores
-
-    @property
-    def orders(self):
-        if self._orders is None:
-            from app.services.orders import OrdersService
-            self._orders = OrdersService(self)
-        return self._orders
-
-    @property
-    def promotions(self):
-        if self._promotions is None:
-            from app.services.promotions import PromotionsService
-            self._promotions = PromotionsService(self)
-        return self._promotions

@@ -2,114 +2,99 @@
 
 ## Contexte du projet
 
-Wrapper Python de l'API Uber Eats basé sur 5 fichiers OpenAPI JSON situés dans `uber_eats_api_doc/`.
+Serveur MCP Python exposant des outils de lecture de l'API Uber Eats, destiné à être intégré dans une plateforme de chatbots/RAG utilisée par des restaurateurs.
 
 **Environnement :**
 - Python 3.12+
-- Dépendances : `requests`, `pydantic>=2.0`, `python-dotenv>=1.0.0`, `fastapi>=0.115.0`, `uvicorn[standard]>=0.30.0`
+- Dépendances : `fastmcp>=3.1.0`, `requests>=2.32.5`, `pydantic>=2.0.0`, `python-dotenv>=1.0.0`
 - Gestionnaire de packages : `uv` (fichier `uv.lock` présent)
 - Binaire uv installé dans `~/.local/bin/uv` (à ajouter au PATH si absent)
 
-**Démarrage du serveur FastAPI :**
+**Démarrage du serveur MCP :**
 ```bash
-uv run uvicorn app.main:app --reload
-# Swagger UI disponible sur http://localhost:8000/docs
+uv run python -m mcp_server.server        # transport stdio (production)
+uv run fastmcp dev mcp_server/tools.py    # interface de debug FastMCP
 ```
 
 **Variables d'environnement** (fichier `.env`) :
-- `UBER_EATS_API_CALLS_DOMAIN` — base URL de l'API (sandbox : `https://test-api.uber.com`)
-- `UBER_EATS_AUTHENT_DOMAIN` — domaine d'authentification OAuth
+- `UBER_EATS_API_CALLS_DOMAIN` — base URL de l'API (sandbox : `https://test-api.uber.com`, prod : `https://api.uber.com`)
 - `UBER_EATS_API_TOKEN` — bearer token actif
 - `UBER_EATS_CLIENT_ID` / `UBER_EATS_CLIENT_SECRET` — credentials OAuth
+- `UBER_EATS_AUTHENT_DOMAIN` — domaine d'authentification OAuth
 
 ---
 
 ## Structure du projet
 
 ```
-app/
-├── __init__.py          # exporte UberEatsClient, UberEatsAPIError
-├── client.py            # client HTTP de base (session, auth, gestion d'erreurs)
-├── main.py              # FastAPI entry point — montage des routers + exception handler UberEatsAPIError
-├── dependencies.py      # get_client() — singleton UberEatsClient via lru_cache
-├── models/
-│   ├── __init__.py      # exporte tous les modèles
-│   ├── common.py        # UberEatsBaseModel, CurrencyAmount, Money, PaginationData
-│   ├── stores.py        # Store, StoreList, StoreStatusResponse + enums
-│   ├── orders.py        # RestaurantOrder, OrderList, Order, Cart, Item... + enums
-│   └── promotions.py   # BasePromotion, FlatOffPromotion, PercentOffPromotion... + parse_promotion()
-├── routers/
-│   ├── __init__.py
-│   ├── stores.py        # GET /stores, GET /stores/{id}, GET /stores/{id}/status
-│   ├── orders.py        # GET /orders/{id}, GET /stores/{id}/orders
-│   └── promotions.py   # GET /promotions/{id}, GET /stores/{id}/promotions
-└── services/
-    ├── __init__.py
-    ├── stores.py        # StoresService — Store API (7 endpoints)
-    ├── orders.py        # OrdersService — Order Fulfillment API (10 endpoints)
-    └── promotions.py   # PromotionsService — Promotions API (4 endpoints + helpers)
+mcp_server/
+├── __init__.py
+├── client.py         # client HTTP de base (session, auth, gestion d'erreurs)
+├── tools.py          # 7 outils MCP — entry point de la logique métier
+├── server.py         # entry point stdio : uv run python -m mcp_server.server
+└── models/
+    ├── __init__.py   # re-exporte tous les modèles
+    ├── stores.py     # StoreModel, StoreStatusModel, StoreListModel
+    ├── orders.py     # OrderItemModel, OrderModel, OrderListModel
+    └── promotions.py # PromotionModel, PromotionListModel
 
 uber_eats_api_doc/
-├── openapi.json                 # Store API
-├── openapi (1).json             # Order Fulfillment API
-└── openapi (4).json             # Promotions API
+├── openapi.json         # Store API
+├── openapi (1).json     # Order Fulfillment API
+└── openapi (4).json     # Promotions API
 ```
 
 ---
 
 ## Architecture
 
-### Client (`app/client.py`)
+### Client (`mcp_server/client.py`)
 
 `UberEatsClient` gère :
 - La session `requests` avec header `Authorization: Bearer <token>` automatique
 - Les méthodes `get()`, `post()`, `delete()` qui retournent des `dict`
 - La levée de `UberEatsAPIError` (avec `status_code`, `code`, `message`, `metadata`) pour tout statut HTTP non-2xx
-- L'accès lazy aux services via des propriétés : `client.stores`, `client.orders`, `client.promotions`
 
 ```python
-from app import UberEatsClient, UberEatsAPIError
+from mcp_server.client import UberEatsClient, UberEatsAPIError
 client = UberEatsClient()  # lit le .env automatiquement
+data = client.get("/v1/delivery/stores")
 ```
 
-### Modèles (`app/models/`)
+Le préfixe `Bearer` est ajouté automatiquement — ne pas l'inclure dans le token du `.env`.
 
-Tous les modèles héritent de `UberEatsBaseModel` (Pydantic v2) :
-- `extra="ignore"` — champs inconnus de l'API silencieusement ignorés
-- `populate_by_name=True` — population par nom de champ
-- Tous les champs sont `Optional` avec défaut `None`
+### Modèles (`mcp_server/models/`)
 
-**Conventions monétaires :** `CurrencyAmount.amount_e5` est l'unité interne Uber (×10⁵). La propriété `.amount` retourne le décimal lisible.
+Rôle : recevoir la réponse brute de l'API Uber Eats, filtrer les champs pertinents pour le LLM, et retourner un dict propre via `.model_dump(exclude_none=True)`.
 
-**Promotions — pattern factory :** `parse_promotion(data: dict) -> BasePromotion` retourne le bon sous-type en fonction de `promo_type`. Utilisé automatiquement par `PromotionsService.get()` et `PromotionList`.
+Tous les modèles héritent de `BaseModel` (Pydantic v2) avec `ConfigDict(extra="ignore")` — le bruit de l'API est automatiquement supprimé. Tous les champs sont `Optional` avec défaut `None`.
 
-**Raccourcis utiles sur les modèles :**
-- `StoreStatusResponse.is_online` → bool
-- `OrderList.orders` → `List[Order]` (dépaquète les wrappers `RestaurantOrder`)
-- `Order.primary_customer` → `Customer | None`
-- `Order.item_count` → int
+Les `@model_validator(mode="before")` sont utilisés pour aplatir les structures imbriquées de l'API :
+- `StoreModel` : extrait `address` depuis `location`, `prep_time_seconds` depuis `prep_times.default_value`, `merchant_type` depuis `uber_merchant_type.type`
+- `StoreStatusModel` : calcule `is_online` (bool), renomme `reason` → `offline_reason`, `is_offline_until` → `offline_until`
+- `StoreListModel` : mappe `data` → `stores`, extrait `next_page_token` depuis `pagination_data`
+- `OrderModel` : extrait `customer_name` et `customer_phone` depuis `customers[]`, aplatit `carts[].items[]` → `items`, calcule `item_count`, extrait `delivery_status` depuis `deliveries[0].status`
+- `OrderListModel` : dépaquète les wrappers `{"order": {...}}` dans `data[]`, extrait `next_page_token` et `total_count`
+- `PromotionModel` : mappe `promo_type` → `type`, extrait `target_customers` depuis `promotion_customization.user_group`, place le bon sous-objet de discount dans `discount_details`
 
-### Services (`app/services/`)
+### Tools (`mcp_server/tools.py`)
 
-Chaque service reçoit le `client` en constructeur et appelle `Model.model_validate(data)` sur les réponses.
+7 outils MCP enregistrés sur un `FastMCP(name="UberEatsAPIWrapper")`. Chaque outil :
+1. Appelle `client.get(path, params)` directement (pas de couche service)
+2. Parse avec le modèle : `Model.model_validate(data)`
+3. Retourne `.model_dump(exclude_none=True)`
 
-**Retours typés :**
-| Service | Méthode | Retour |
-|---------|---------|--------|
-| stores | `list()` | `StoreList` |
-| stores | `get()`, `update()`, `update_status()` | `Store` |
-| stores | `get_status()` | `StoreStatusResponse` |
-| stores | `update_prep_time()`, `update_fulfillment_config()` | `dict` |
-| orders | `get()` | `RestaurantOrder` |
-| orders | `list()` | `OrderList` |
-| orders | `adjust_price()` | `AdjustPriceResponse` |
-| orders | autres actions (accept, deny, cancel…) | `dict` |
-| promotions | `create()` | `CreatePromotionResponse` |
-| promotions | `get()` | `BasePromotion` (sous-type selon `promo_type`) |
-| promotions | `list()` | `PromotionList` |
-| promotions | `revoke()` | `dict` |
+| Outil MCP | Endpoint API | Modèle |
+|-----------|-------------|--------|
+| `list_stores` | `GET /v1/delivery/stores` | `StoreListModel` |
+| `get_store` | `GET /v1/delivery/store/{store_id}` | `StoreModel` |
+| `get_store_status` | `GET /v1/delivery/store/{store_id}/status` | `StoreStatusModel` |
+| `get_order` | `GET /v1/delivery/order/{order_id}` | `OrderModel` |
+| `list_store_orders` | `GET /v1/delivery/store/{store_id}/orders` | `OrderListModel` |
+| `get_promotion` | `GET /v1/delivery/promotions/{promotion_id}` | `PromotionModel` |
+| `list_store_promotions` | `GET /v1/delivery/stores/{store_id}/promotions` | `PromotionListModel` |
 
-**Helpers statiques sur `PromotionsService` :** `flat_off()`, `percent_off()`, `free_delivery()` pour construire les payloads de promotion.
+**Note :** `get_order` dépaquète le wrapper `{"order": {...}}` avant de valider : `data.get("order", data)`.
 
 ---
 
@@ -125,36 +110,32 @@ Chaque service reçoit le `client` en constructeur et appelle `Model.model_valid
 
 ---
 
-## Couche FastAPI (`app/`)
+## Intégration plateforme chatbot
 
-### Architecture
-- `app/dependencies.py` — `get_client()` retourne un singleton `UberEatsClient` via `@lru_cache`. À injecter avec `Depends(get_client)` dans chaque endpoint.
-- `app/main.py` — crée l'app FastAPI, enregistre un `exception_handler` pour `UberEatsAPIError` (mappe sur `JSONResponse` avec le `status_code` Uber), inclut les 3 routers.
-- Les modèles `app/models/` sont réutilisés directement comme `response_model` FastAPI (Pydantic v2 compatible).
+Transport **stdio**. Configuration côté plateforme :
 
-### Endpoints exposés (GET uniquement)
-| Méthode | Path | Service | response_model |
-|---------|------|---------|---------------|
-| GET | `/stores` | `stores.list()` | `StoreList` |
-| GET | `/stores/{store_id}` | `stores.get()` | `Store` |
-| GET | `/stores/{store_id}/status` | `stores.get_status()` | `StoreStatusResponse` |
-| GET | `/orders/{order_id}` | `orders.get()` | `RestaurantOrder` |
-| GET | `/stores/{store_id}/orders` | `orders.list()` | `OrderList` |
-| GET | `/promotions/{promotion_id}` | `promotions.get()` | `BasePromotion` |
-| GET | `/stores/{store_id}/promotions` | `promotions.list()` | `PromotionList` |
-
-### Conventions routers
-- Chaque endpoint a une `description` orientée action (pour futur MCP)
-- `Path(description=...)` sur les path params, `Query(description=...)` sur les query params
-- Les valeurs possibles des enums sont documentées dans la description du paramètre
+```json
+{
+  "mcpServers": {
+    "uber-eats": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "mcp_server.server"],
+      "cwd": "/path/to/wrapper-uber-eats-api",
+      "env": {
+        "UBER_EATS_API_TOKEN": "...",
+        "UBER_EATS_API_CALLS_DOMAIN": "https://api.uber.com"
+      }
+    }
+  }
+}
+```
 
 ---
 
 ## Patterns à respecter
 
-- Ne pas modifier `UberEatsBaseModel` (extra="ignore" est intentionnel)
-- Les nouveaux services doivent suivre le même pattern : importer les modèles au top-level (pas dans `TYPE_CHECKING`), retourner `Model.model_validate(data)`
-- Les nouveaux modèles doivent hériter de `UberEatsBaseModel` et avoir tous les champs `Optional`
-- `app/models/__init__.py` doit être mis à jour à chaque nouveau modèle
-- Le préfixe `Bearer` est ajouté automatiquement dans `client.py` — ne pas l'inclure dans le token du `.env`
-- Les nouveaux endpoints FastAPI (GET) suivent le pattern : `Depends(get_client)` + `response_model` explicite + descriptions détaillées
+- Pas de couche services — les tools appellent `client.get()` directement
+- Les nouveaux modèles héritent de `BaseModel` avec `ConfigDict(extra="ignore")`, tous les champs `Optional`
+- `mcp_server/models/__init__.py` doit être mis à jour à chaque nouveau modèle
+- Les nouveaux tools suivent le pattern : `client.get()` → `Model.model_validate(data)` → `.model_dump(exclude_none=True)`
+- Les descriptions des tools sont orientées restaurateur (pas technique)
