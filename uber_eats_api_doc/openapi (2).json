@@ -1,0 +1,456 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Delivery Partner API",
+    "description": "For API testing via Postman, ensure your application's scopes are approved, and then click [here](https://god.gw.postman.com/run-collection/6384856-15146fc5-4e59-4f50-85c8-64567630e791?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D6384856-15146fc5-4e59-4f50-85c8-64567630e791%26entityType%3Dcollection%26workspaceId%3De5995580-1109-4772-a883-92e9531beae5#?env%5BUber%20Eats%20Marketplace%20API%5D=W3sia2V5IjoidWJlcl9hcGlfY2xpZW50X2lkIiwidmFsdWUiOiIiLCJlbmFibGVkIjp0cnVlLCJzZXNzaW9uVmFsdWUiOiIiLCJzZXNzaW9uSW5kZXgiOjB9LHsia2V5IjoidWJlcl9hcGlfY2xpZW50X3NlY3JldCIsInZhbHVlIjoiIiwiZW5hYmxlZCI6dHJ1ZSwidHlwZSI6InNlY3JldCIsInNlc3Npb25WYWx1ZSI6IiIsInNlc3Npb25JbmRleCI6MX0seyJrZXkiOiJzdG9yZV9pZCIsInZhbHVlIjoiIiwiZW5hYmxlZCI6dHJ1ZSwic2Vzc2lvblZhbHVlIjoiIiwic2Vzc2lvbkluZGV4IjoyfSx7ImtleSI6ImJhc2VfdXJsIiwidmFsdWUiOiJodHRwczovL2FwaS51YmVyLmNvbSIsImVuYWJsZWQiOnRydWUsInR5cGUiOiJkZWZhdWx0Iiwic2Vzc2lvblZhbHVlIjoiaHR0cHM6Ly9hcGkudWJlci5jb20iLCJzZXNzaW9uSW5kZXgiOjN9LHsia2V5IjoiZWF0c19zdG9yZV90b2tlbiIsInZhbHVlIjoiIiwiZW5hYmxlZCI6dHJ1ZSwidHlwZSI6ImFueSIsInNlc3Npb25WYWx1ZSI6IiIsInNlc3Npb25JbmRleCI6NH0seyJrZXkiOiJzY29wZXMiLCJ2YWx1ZSI6IiIsImVuYWJsZWQiOnRydWUsInR5cGUiOiJkZWZhdWx0Iiwic2Vzc2lvblZhbHVlIjoiIiwic2Vzc2lvbkluZGV4Ijo1fSx7ImtleSI6Im9yZGVyX2lkIiwidmFsdWUiOiIiLCJlbmFibGVkIjp0cnVlLCJ0eXBlIjoiZGVmYXVsdCIsInNlc3Npb25WYWx1ZSI6IiIsInNlc3Npb25JbmRleCI6Nn1d)  to fork the collection.\n\n# Table of content\n- [Delivery Webhooks](#tag/DeliveryWebhookEvents)\n- [Dispatch Multiple Courier](#tag/UpdateDeliveryPartnerCount)\n"
+  },
+  "servers": [
+    {
+      "url": "https://api.uber.com"
+    }
+  ],
+  "paths": {
+    "/v1/delivery/order/{order_id}/update-delivery-partner-count": {
+      "post": {
+        "summary": "Dispatch Multiple Courier",
+        "description": "Dispatch Multi-Courier (DMC) is a feature designed to support merchants, such as restaurants and grocery stores, when they have large orders that exceed the carrying capacity of a single courier. With DMC, merchants can request between 2 to 4 couriers, and in exceptional cases, up to 5 couriers. Merchants have the flexibility to add or reduce the number of couriers up to 10 minutes after the first courier starts the delivery. It's essential to understand that DMC's role is solely to provide additional couriers; the responsibility of dividing the order among the couriers rests with the merchants. As of 2023, DMC is available for restaurant and grocery merchant pick-and-pack orders but not for courier-specific pick-and-pack orders. Below is a list of regions/countries where DMC is currently available. This list is for reference purposes only and may change. If you believe your region or store should be included, please contact your regional Uber Ops point of contact.\n* Americas - Manhattan (NYC), Costa Rica, Dominican Republic, Ecuador, El Salvador, Guatemala, Panama\n* Europe and Middle East - Franc, Germany, Netherlands, Spain, Italy, Portugal, Ukraine, Sweden, Ireland, UK (select cities), Switzerland (select cities), Poland (select cities), Norway (select cities), United Arab Emirates (select cities)\n* Africa - South Africa, Kenya\n* Asian - Japan, Hong Kong, Taiwan, Sri Lanka (Colombo)\n",
+        "operationId": "updateDeliveryPartnerCount",
+        "tags": [
+          "UpdateDeliveryPartnerCount"
+        ],
+        "security": [
+          {
+            "auth": [
+              "delivery.multiple.courier"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "order_id",
+            "description": "Unique identifier for the order",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "54b829fe-e013-4065-8ba4-74f10bmdf999"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Content-Type",
+            "description": "The content type of the request payload",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "delivery_partner_count": {
+                    "type": "integer",
+                    "description": "The number of delivery partners for the order",
+                    "example": 2
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid token"
+          },
+          "404": {
+            "description": "Order not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {
+    "webhookEvents": {
+      "post": {
+        "summary": "Delivery Webhook Event Types",
+        "tags": [
+          "DeliveryWebhookEvents"
+        ],
+        "description": "The below order webhooks can be managed within the [Integration Configuration API Suite](/docs/eats/references/api/integration_activation_suite). The API version you set will determine the webhooks and `resource_href` passed in webhook body.\n\n- `delivery.state_changed` - notification of Delivery Status can be used to track the delivery state. This event is triggered when the delivery state changes.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/delivery.state_changed"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook successfully received"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/bad_request_error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorized_error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/not_found_error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internal_server_error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "auth": {
+        "type": "oauth2",
+        "description": "This API uses OAuth 2 with the implicit grant flow. [More info](https://developer.uber.com/docs/eats/guides/authentication)",
+        "flows": {
+          "implicit": {
+            "authorizationUrl": "https://auth.uber.com/oauth/v2/token",
+            "scopes": {
+              "eats.order": "Indicates a token has permission to update and retrieve order information.",
+              "delivery.multiple.courier": "Indicates a token has permission to update the count of delivery partners associated with an order."
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "delivery.state_changed": {
+        "type": "object",
+        "description": null,
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "event_type": {
+            "type": "string",
+            "example": "delivery.state_changed"
+          },
+          "event_time": {
+            "$ref": "#/components/schemas/event_time"
+          },
+          "resource_href": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://api.uber.com/v1/delivery/order/1676a555-1a6f-4d49-be91-c9bb8f94af49"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "courier_trip_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "store_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "order_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "external_order_id": {
+                "type": "string",
+                "example": "order123"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "SCHEDULED",
+                  "EN_ROUTE_TO_PICKUP",
+                  "ARRIVED_AT_PICKUP",
+                  "EN_ROUTE_TO_DROPOFF",
+                  "ARRIVED_AT_DROPOFF",
+                  "COMPLETED",
+                  "FAILED"
+                ],
+                "example": "EN_ROUTE_TO_PICKUP"
+              }
+            }
+          },
+          "webhook_meta": {
+            "$ref": "#/components/schemas/webhook_meta"
+          }
+        }
+      },
+      "event_time": {
+        "type": "integer",
+        "format": "unix_timestamp",
+        "example": 1729651095000
+      },
+      "webhook_meta": {
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "webhook_config_id": {
+            "type": "string",
+            "example": "eats-restaurant-order-experience.order-webhooks"
+          },
+          "webhook_msg_timestamp": {
+            "type": "integer",
+            "format": "unix_timestamp",
+            "example": 1729651095
+          },
+          "webhook_msg_uuid": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "feedback": {
+        "type": "object",
+        "properties": {
+          "store_id": {
+            "type": "string",
+            "description": "Unique identifier of the store.",
+            "example": "4f6d8de4-bb1d-4cf6-81c3-fe981b184751"
+          },
+          "delivery_id": {
+            "type": "string",
+            "description": "Unique identifier of the delivery.",
+            "example": "62950941-7cc9-4c4c-82ff-57d6cc2452df"
+          },
+          "rating": {
+            "type": "string",
+            "description": "Rating for the delivery partner\n| String    | Description |\n| ---- | ---- |\n| THUMBS_UP  | delivery partner performed well |\n| THUMBS_DOWN | there was an issue with the delivery partner’s performance |\n",
+            "example": "THUMBS_UP"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Description of why the delivery partner is being given a rating.",
+            "example": "Professional"
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "description": "bad_request",
+        "properties": {
+          "metadata": {
+            "type": "object",
+            "description": "Error message not standardized. Application code will provide contextual error message"
+          }
+        }
+      },
+      "bad_request_error": {
+        "type": "object",
+        "description": "bad_request",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "bad_request",
+            "description": "Description of the error."
+          },
+          "message": {
+            "type": "string",
+            "example": "Error message not standardized. Application code will provide contextual error message",
+            "description": "Description details of the error."
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata about the error.",
+            "properties": {
+              "field_violations": {
+                "type": "array",
+                "description": "A list of invalid or missing fields passed in the request.",
+                "items": {
+                  "type": "string",
+                  "example": "order_id, expand"
+                }
+              },
+              "should_retry": {
+                "type": "boolean",
+                "example": true,
+                "description": "Only provided for API Version 2.0.0 and higher. Indicates if the request should be retried."
+              },
+              "recommended_retry_interval_secs": {
+                "type": "integer",
+                "example": 60,
+                "description": "Only provided for API Version 2.0.0 and higher. The recommended wait interval in seconds between retries. Only provided if should_retry is true."
+              },
+              "reference_documentation_url": {
+                "type": "string",
+                "example": "https://developer.uber.com/docs/eats/references/api/order_suite",
+                "description": "Only provided for API Version 2.0.0 and higher. Link to reference documentation about the error."
+              },
+              "erroneous_field": {
+                "type": "string",
+                "example": "order_id",
+                "description": "Only provided for API Version 2.0.0 and higher. Indicates which field passed in could be changed to fix the error."
+              }
+            }
+          }
+        }
+      },
+      "unauthorized_error": {
+        "type": "object",
+        "description": "unauthorized",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "unauthorized",
+            "description": "Description of the error."
+          },
+          "message": {
+            "type": "string",
+            "example": "Invalid OAuth 2.0 credentials provided. | Error message not standardized. Application code will provide contextual error message",
+            "description": "Description details of the error."
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata about the error.",
+            "$ref": "#/components/schemas/error_metadata"
+          }
+        }
+      },
+      "not_found_error": {
+        "type": "object",
+        "description": "not_found",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "not_found",
+            "description": "Description of the error."
+          },
+          "message": {
+            "type": "string",
+            "example": "Order not found | Error message not standardized. Application code will provide contextual error message",
+            "description": "Description details of the error."
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata about the error.",
+            "$ref": "#/components/schemas/error_metadata"
+          }
+        }
+      },
+      "internal_server_error": {
+        "type": "object",
+        "description": "internal_server_error",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "internal_server_error",
+            "description": "Description of the error."
+          },
+          "message": {
+            "type": "string",
+            "example": "An internal error has occurred. Please contact support if this persists.",
+            "description": "Description details of the error."
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata about the error.",
+            "$ref": "#/components/schemas/error_metadata"
+          }
+        }
+      },
+      "error_metadata": {
+        "type": "object",
+        "description": "Only provided for API Version 2.0.0 and higher. Additional metadata about an error.",
+        "properties": {
+          "should_retry": {
+            "type": "boolean",
+            "example": true,
+            "description": "Indicates if the request should be retried."
+          },
+          "recommended_retry_interval_secs": {
+            "type": "integer",
+            "example": 60,
+            "description": "The recommended wait interval in seconds between retries."
+          },
+          "reference_documentation_url": {
+            "type": "string",
+            "example": "https://developer.uber.com/docs/eats/references/api/order_suite",
+            "description": "Link to reference documentation about the error."
+          },
+          "erroneous_field": {
+            "type": "string",
+            "example": "order_id",
+            "description": "Indicates which field passed in could be changed to fix the error."
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "payload reverted for unsuccessful API transactions.",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "Unauthorized",
+            "description": "description of the error."
+          },
+          "message": {
+            "type": "string",
+            "example": "Invalid OAuth 2.0 credentials provided. | Error message not standardized. Application code will provide contextual error message",
+            "description": "description details of the error."
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__context7__resolve-library-id",
+      "Bash(uv run:*)",
+      "Bash(~/.local/bin/uv run:*)",
+      "Bash(find /home/nathan/git/wrapper-uber-eats-api/mcp_server -type f -name \"*.py\" -o -name \"*.json\" -o -name \"*.txt\" -o -name \"*.md\" 2>/dev/null | head -20)",
+      "Bash(cat /home/nathan/git/wrapper-uber-eats-api/uber_eats_api_doc/openapi.json | jq -r '.paths | to_entries[] | select\\(.value | has\\(\"get\"\\)\\) | \"\\\\\\(.key\\): \\\\\\(.value.get.summary // .value.get.description // \"no summary\"\\)\"' 2>/dev/null)",
+      "Bash(python3 << 'EOF'\nimport json\n\n# Load openapi.json \\(Stores API\\)\nwith open\\('/home/nathan/git/wrapper-uber-eats-api/uber_eats_api_doc/openapi.json'\\) as f:\n    spec = json.load\\(f\\)\n\nprint\\(\"=== openapi.json \\(Marketplace Store API\\) ===\"\\)\nfor path, methods in spec['paths'].items\\(\\):\n    if 'get' in methods:\n        summary = methods['get'].get\\('summary', 'N/A'\\)\n        print\\(f\"GET {path}\"\\)\n        print\\(f\"  Summary: {summary}\\\\n\"\\)\nEOF)",
+      "Bash(python3 << 'EOF'\nimport json\n\n# Load openapi \\(1\\).json \\(Order Fulfillment API\\)\nwith open\\('/home/nathan/git/wrapper-uber-eats-api/uber_eats_api_doc/openapi \\(1\\).json'\\) as f:\n    spec = json.load\\(f\\)\n\nprint\\(\"=== openapi \\(1\\).json \\(Order Fulfillment API\\) ===\"\\)\nfor path, methods in spec['paths'].items\\(\\):\n    if 'get' in methods:\n        summary = methods['get'].get\\('summary', 'N/A'\\)\n        print\\(f\"GET {path}\"\\)\n        print\\(f\"  Summary: {summary}\\\\n\"\\)\nEOF)",
+      "Bash(python3 << 'EOF'\nimport json\n\n# Load openapi \\(4\\).json \\(Promotions API\\)\nwith open\\('/home/nathan/git/wrapper-uber-eats-api/uber_eats_api_doc/openapi \\(4\\).json'\\) as f:\n    spec = json.load\\(f\\)\n\nprint\\(\"=== openapi \\(4\\).json \\(Marketplace Promotions API\\) ===\"\\)\nfor path, methods in spec['paths'].items\\(\\):\n    if 'get' in methods:\n        summary = methods['get'].get\\('summary', 'N/A'\\)\n        print\\(f\"GET {path}\"\\)\n        print\\(f\"  Summary: {summary}\\\\n\"\\)\nEOF)",
+      "Bash(wc -l /home/nathan/git/wrapper-uber-eats-api/app/models/*.py)",
+      "Bash(~/.local/bin/uv sync:*)"
+    ]
+  }
+}
