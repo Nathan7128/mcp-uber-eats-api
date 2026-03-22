@@ -1,0 +1,20 @@
+{
+	"mcpServers": {
+		"playwright": {
+			"command": "/workspace/node_modules/.bin/mcp-server-playwright",
+			"args": [
+				"--config",
+				"/workspace/.playwright-mcp.config.json",
+				"--allow-unrestricted-file-access"
+			]
+		},
+		"context7": {
+			"command": "pnpm",
+			"args": ["dlx", "@upstash/context7-mcp"]
+		},
+		"chrome-devtools": {
+			"command": "pnpm",
+			"args": ["dlx", "chrome-devtools-mcp@latest", "--no-usage-statistics"]
+		}
+	}
+}
