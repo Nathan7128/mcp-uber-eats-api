@@ -1,4 +1,6 @@
 """MCP Tools for the Uber Eats API — read-only operations for restaurateurs."""
+import os
+
 from fastmcp import FastMCP
 
 from mcp_server.client import UberEatsClient
@@ -6,7 +8,12 @@ from mcp_server.models.stores import StoreModel, StoreStatusModel, StoreListMode
 from mcp_server.models.orders import OrderModel, OrderListModel
 from mcp_server.models.promotions import PromotionModel, PromotionListModel
 
-client = UberEatsClient()
+if os.getenv("MOCK_API", "").lower() in {"1", "true", "yes"}:
+    from mcp_server.mock_client import MockUberEatsClient
+    client = MockUberEatsClient()
+else:
+    client = UberEatsClient()
+
 mcp = FastMCP(name="UberEatsAPIWrapper")
 
 

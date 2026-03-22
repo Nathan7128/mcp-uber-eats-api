@@ -13,10 +13,12 @@ load_dotenv()
 MODEL = os.getenv("LLM_MODEL", "gemini/gemini-2.5-flash")
 
 # Chemin absolu vers le module serveur MCP
+_env = {**os.environ}
 MCP_SERVER_PARAMS = StdioServerParameters(
     command="uv",
     args=["run", "python", "-m", "mcp_server.server"],
     cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")),
+    env=_env,
 )
 
 SYSTEM_PROMPT = (
