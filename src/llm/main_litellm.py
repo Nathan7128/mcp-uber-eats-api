@@ -1,5 +1,4 @@
 import asyncio
-import json
 import os
 import sys
 
@@ -11,13 +10,13 @@ from mcp.client.stdio import stdio_client
 
 load_dotenv()
 
-MODEL = os.getenv("LLM_MODEL", "claude-sonnet-4-6")
+MODEL = os.getenv("LLM_MODEL", "gemini/gemini-2.5-flash")
 
 # Chemin absolu vers le module serveur MCP
 MCP_SERVER_PARAMS = StdioServerParameters(
     command="uv",
     args=["run", "python", "-m", "mcp_server.server"],
-    cwd=os.path.join(os.path.dirname(__file__), "..", ".."),
+    cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")),
 )
 
 SYSTEM_PROMPT = (

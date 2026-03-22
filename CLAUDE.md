@@ -132,6 +132,36 @@ Transport **stdio**. Configuration côté plateforme :
 
 ---
 
+## Stack LiteLLM (`src/llm/`)
+
+Module de test interactif du LLM connecté au serveur MCP, en boucle de conversation dans le terminal.
+
+**Démarrage :**
+```bash
+uv run python -m llm.main_litellm
+```
+
+**Variables d'environnement** supplémentaires (fichier `.env`) :
+- `GEMINI_API_KEY` — clé API Google AI Studio
+- `LLM_MODEL` — modèle LiteLLM à utiliser (défaut : `gemini/gemini-2.5-flash`)
+
+**Fonctionnement :**
+1. Lance le serveur MCP en subprocess via `stdio_client` (même transport qu'en production)
+2. Charge les outils MCP au démarrage via `experimental_mcp_client.load_mcp_tools`
+3. Boucle de conversation : lit un prompt → boucle agentique → affiche la réponse
+4. La boucle agentique gère les `tool_calls` : exécute chaque outil MCP et renvoie le résultat au LLM jusqu'à obtenir une réponse textuelle finale
+
+**Structure :**
+```
+llm/
+├── __init__.py
+└── main_litellm.py   # entry point : boucle REPL + boucle agentique MCP
+```
+
+**Packaging :** `hatchling` est utilisé comme build backend (`pyproject.toml`) pour exposer `src/mcp_server` et `src/llm` comme packages Python installables depuis la racine du projet.
+
+---
+
 ## Patterns à respecter
 
 - Pas de couche services — les tools appellent `client.get()` directement
