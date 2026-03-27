@@ -14,7 +14,13 @@
       "mcp__context7__query-docs",
       "Bash(find /home/nathan/git/mcp-uber-eats-api -type f -exec ls -lh {})",
       "Bash(sort -k2)",
-      "Bash(grep -r \"import\\\\|from\" /home/nathan/git/mcp-uber-eats-api/mcp_server/*.py)"
+      "Bash(grep -r \"import\\\\|from\" /home/nathan/git/mcp-uber-eats-api/mcp_server/*.py)",
+      "Bash(grep -r \"def \" /home/nathan/git/mcp-uber-eats-api/src/mcp_server/*.py)",
+      "Bash(python3 -m py_compile /home/nathan/git/mcp-uber-eats-api/src/mcp_server/*.py /home/nathan/git/mcp-uber-eats-api/src/mcp_server/models/*.py /home/nathan/git/mcp-uber-eats-api/src/llm/*.py)",
+      "Bash(grep -n \"Any\\\\|Union\" /home/nathan/git/mcp-uber-eats-api/src/mcp_server/*.py /home/nathan/git/mcp-uber-eats-api/src/mcp_server/models/*.py /home/nathan/git/mcp-uber-eats-api/src/llm/*.py)",
+      "Bash(MOCK_API=1 uv run pytest 2>&1)",
+      "Bash(git stash:*)",
+      "Bash(MOCK_API=1 uv run pytest)"
     ]
   },
   "enabledMcpjsonServers": [

@@ -1,26 +1,33 @@
-from __future__ import annotations
-
-from typing import Optional, List
 from pydantic import BaseModel, ConfigDict, model_validator
 
 __all__ = ["OrderItemModel", "OrderModel", "OrderListModel"]
 
 
 class ModifierModel(BaseModel):
+    """A modifier group applied to an order item (e.g. 'Sauces': ['Ketchup', 'Mayo'])."""
+
     model_config = ConfigDict(extra="ignore")
 
-    group: Optional[str] = None
-    options: Optional[List[str]] = None
+    group: str | None = None
+    options: list[str] | None = None
 
 
 class OrderItemModel(BaseModel):
+    """A single item in a customer order.
+
+    Flattens nested API fields: title → name,
+    quantity.amount → quantity,
+    customer_request → special_instructions,
+    selected_modifier_groups → modifiers.
+    """
+
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
-    id: Optional[str] = None
-    name: Optional[str] = None
-    quantity: Optional[float] = None
-    special_instructions: Optional[str] = None
-    modifiers: Optional[List[ModifierModel]] = None
+    id: str | None = None
+    name: str | None = None
+    quantity: float | None = None
+    special_instructions: str | None = None
+    modifiers: list[ModifierModel] | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -56,21 +63,27 @@ class OrderItemModel(BaseModel):
 
 
 class OrderModel(BaseModel):
+    """Full order details including customer info, items, and delivery status.
+
+    Flattens nested API fields: customers[] → customer_name/customer_phone,
+    carts[].items[] → items, deliveries[0].status → delivery_status.
+    """
+
     model_config = ConfigDict(extra="ignore")
 
-    id: Optional[str] = None
-    display_id: Optional[str] = None
-    state: Optional[str] = None
-    status: Optional[str] = None
-    fulfillment_type: Optional[str] = None
-    customer_name: Optional[str] = None
-    customer_phone: Optional[str] = None
-    items: Optional[List[OrderItemModel]] = None
-    item_count: Optional[int] = None
-    created_time: Optional[str] = None
-    ready_for_pickup_time: Optional[str] = None
-    store_instructions: Optional[str] = None
-    delivery_status: Optional[str] = None
+    id: str | None = None
+    display_id: str | None = None
+    state: str | None = None
+    status: str | None = None
+    fulfillment_type: str | None = None
+    customer_name: str | None = None
+    customer_phone: str | None = None
+    items: list[OrderItemModel] | None = None
+    item_count: int | None = None
+    created_time: str | None = None
+    ready_for_pickup_time: str | None = None
+    store_instructions: str | None = None
+    delivery_status: str | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -120,11 +133,13 @@ class OrderModel(BaseModel):
 
 
 class OrderListModel(BaseModel):
+    """Paginated list of orders for a store."""
+
     model_config = ConfigDict(extra="ignore")
 
-    orders: Optional[List[OrderModel]] = None
-    total_count: Optional[int] = None
-    next_page_token: Optional[str] = None
+    orders: list[OrderModel] | None = None
+    total_count: int | None = None
+    next_page_token: str | None = None
 
     @model_validator(mode="before")
     @classmethod

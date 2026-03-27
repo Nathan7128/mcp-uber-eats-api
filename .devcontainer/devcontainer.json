@@ -1,0 +1,22 @@
+{
+  "name": "mcp-uber-eats-api",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "remoteEnv": {
+    "OLLAMA_API_BASE": "http://ollama:11434"
+  },
+  "postCreateCommand": "pip install uv --quiet && uv sync && sh .devcontainer/pull-model.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.pylance",
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/workspace/.venv/bin/python",
+        "editor.formatOnSave": true,
+      }
+    }
+  }
+}

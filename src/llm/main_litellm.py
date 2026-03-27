@@ -10,7 +10,7 @@ from mcp.client.stdio import stdio_client
 
 load_dotenv()
 
-MODEL = os.getenv("LLM_MODEL", "gemini/gemini-2.5-flash")
+MODEL = os.getenv("LLM_MODEL", "ollama/llama3.2")
 
 # Chemin absolu vers le module serveur MCP
 _env = {**os.environ}

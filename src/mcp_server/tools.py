@@ -1,5 +1,6 @@
 """MCP Tools for the Uber Eats API — read-only operations for restaurateurs."""
 import os
+from typing import Any
 
 from fastmcp import FastMCP
 
@@ -21,7 +22,8 @@ mcp = FastMCP(name="UberEatsAPIWrapper")
 def list_stores(
     next_page_token: str | None = None,
     limit: int | None = None,
-) -> dict:
+) -> dict[str, Any]:
+    """List all stores associated with the Uber Eats account."""
     params = {}
     if next_page_token:
         params["next_page_token"] = next_page_token
@@ -40,7 +42,8 @@ def list_stores(
 def get_store(
     store_id: str,
     expand: list[str] | None = None,
-) -> dict:
+) -> dict[str, Any]:
+    """Get details for a single store (hours, address, configuration)."""
     params = {}
     if expand:
         params["expand"] = ",".join(expand)
@@ -51,7 +54,8 @@ def get_store(
 @mcp.tool(
     description="Vérifie si un restaurant est en ligne ou hors ligne, et la raison si hors ligne."
 )
-def get_store_status(store_id: str) -> dict:
+def get_store_status(store_id: str) -> dict[str, Any]:
+    """Check whether a store is currently online or offline."""
     data = client.get(f"/v1/delivery/store/{store_id}/status")
     return StoreStatusModel.model_validate(data).model_dump(exclude_none=True)
 
@@ -62,7 +66,8 @@ def get_store_status(store_id: str) -> dict:
 def get_order(
     order_id: str,
     expand: list[str] | None = None,
-) -> dict:
+) -> dict[str, Any]:
+    """Get full details of a single order (items, customer, delivery status)."""
     params = {}
     if expand:
         params["expand"] = ",".join(expand)
@@ -86,7 +91,8 @@ def list_store_orders(
     end_time: str | None = None,
     page_size: int | None = None,
     next_page_token: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
+    """List orders for a store, with optional filters on state, status, and time range."""
     params = {}
     if state:
         params["state"] = state
@@ -105,12 +111,14 @@ def list_store_orders(
 
 
 @mcp.tool(description="Récupère les détails d'une promotion spécifique.")
-def get_promotion(promotion_id: str) -> dict:
+def get_promotion(promotion_id: str) -> dict[str, Any]:
+    """Get details of a specific promotion."""
     data = client.get(f"/v1/delivery/promotions/{promotion_id}")
     return PromotionModel.model_validate(data).model_dump(exclude_none=True)
 
 
 @mcp.tool(description="Liste toutes les promotions actives d'un restaurant.")
-def list_store_promotions(store_id: str) -> dict:
+def list_store_promotions(store_id: str) -> dict[str, Any]:
+    """List all active promotions for a store."""
     data = client.get(f"/v1/delivery/stores/{store_id}/promotions")
     return PromotionListModel.model_validate(data).model_dump(exclude_none=True)

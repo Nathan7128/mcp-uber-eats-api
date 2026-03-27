@@ -1,3 +1,10 @@
+"""Entry point for the Uber Eats MCP server.
+
+Run with:
+    uv run python -m mcp_server.server                              # stdio (default)
+    uv run python -m mcp_server.server --transport sse              # SSE
+    uv run python -m mcp_server.server --transport http --port 8080 # HTTP
+"""
 from mcp_server.tools import mcp
 
 if __name__ == "__main__":

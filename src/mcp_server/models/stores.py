@@ -1,40 +1,48 @@
-from __future__ import annotations
-
-from typing import Optional, List
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 __all__ = ["StoreModel", "StoreStatusModel", "StoreListModel"]
 
 
 class ContactModel(BaseModel):
+    """Store owner contact information."""
+
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
-    name: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = Field(None, alias="phone_number")
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = Field(None, alias="phone_number")
 
 
 class AddressModel(BaseModel):
+    """Physical address of a store."""
+
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
-    street: Optional[str] = Field(None, alias="street_address_line_one")
-    city: Optional[str] = None
-    country: Optional[str] = None
-    postal_code: Optional[str] = None
+    street: str | None = Field(None, alias="street_address_line_one")
+    city: str | None = None
+    country: str | None = None
+    postal_code: str | None = None
 
 
 class StoreModel(BaseModel):
+    """Filtered representation of an Uber Eats store.
+
+    Flattens nested API fields: location → address,
+    prep_times.default_value → prep_time_seconds,
+    uber_merchant_type.type → merchant_type.
+    """
+
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
-    id: Optional[str] = None
-    name: Optional[str] = None
-    contact: Optional[ContactModel] = None
-    address: Optional[AddressModel] = None
-    timezone: Optional[str] = None
-    onboarding_status: Optional[str] = None
-    auto_accept: Optional[bool] = None
-    prep_time_seconds: Optional[int] = None
-    merchant_type: Optional[str] = None
+    id: str | None = None
+    name: str | None = None
+    contact: ContactModel | None = None
+    address: AddressModel | None = None
+    timezone: str | None = None
+    onboarding_status: str | None = None
+    auto_accept: bool | None = None
+    prep_time_seconds: int | None = None
+    merchant_type: str | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -57,12 +65,14 @@ class StoreModel(BaseModel):
 
 
 class StoreStatusModel(BaseModel):
+    """Online/offline status of a store."""
+
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
-    status: Optional[str] = None
-    is_online: Optional[bool] = None
-    offline_reason: Optional[str] = None
-    offline_until: Optional[str] = None
+    status: str | None = None
+    is_online: bool | None = None
+    offline_reason: str | None = None
+    offline_until: str | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -74,10 +84,12 @@ class StoreStatusModel(BaseModel):
 
 
 class StoreListModel(BaseModel):
+    """Paginated list of stores."""
+
     model_config = ConfigDict(extra="ignore")
 
-    stores: Optional[List[StoreModel]] = None
-    next_page_token: Optional[str] = None
+    stores: list[StoreModel] | None = None
+    next_page_token: str | None = None
 
     @model_validator(mode="before")
     @classmethod

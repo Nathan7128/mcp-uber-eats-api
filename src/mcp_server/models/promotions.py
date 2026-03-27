@@ -1,23 +1,29 @@
-from __future__ import annotations
+from typing import Any
 
-from typing import Optional, List, Any
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 __all__ = ["PromotionModel", "PromotionListModel"]
 
 
 class PromotionModel(BaseModel):
+    """An Uber Eats promotional offer with type-specific discount details.
+
+    Flattens nested API fields: promo_type → type,
+    promotion_customization.user_group → target_customers,
+    and selects the correct discount sub-object into discount_details.
+    """
+
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
-    promotion_id: Optional[str] = None
-    store_id: Optional[str] = None
-    type: Optional[str] = Field(None, alias="promo_type")
-    state: Optional[str] = None
-    start_time: Optional[str] = None
-    end_time: Optional[str] = None
-    currency_code: Optional[str] = None
-    target_customers: Optional[str] = None
-    discount_details: Optional[Any] = None
+    promotion_id: str | None = None
+    store_id: str | None = None
+    type: str | None = Field(None, alias="promo_type")
+    state: str | None = None
+    start_time: str | None = None
+    end_time: str | None = None
+    currency_code: str | None = None
+    target_customers: str | None = None
+    discount_details: Any | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -43,6 +49,8 @@ class PromotionModel(BaseModel):
 
 
 class PromotionListModel(BaseModel):
+    """List of promotions for a store."""
+
     model_config = ConfigDict(extra="ignore")
 
-    promotions: Optional[List[PromotionModel]] = None
+    promotions: list[PromotionModel] | None = None

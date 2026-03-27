@@ -1,10 +1,14 @@
-"""Mock client returning fixture data — used when MOCK_API=true."""
+"""Mock client returning fixture data — used when MOCK_API=true.
+
+Activated automatically by tools.py when the MOCK_API environment variable
+is set to '1', 'true', or 'yes'. Routes are matched via regex against the
+path argument, mirroring the real Uber Eats API URL structure.
+"""
 import copy
 import re
 import sys
-from pathlib import Path
+from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tests.fixtures import (
     STORE_LIST_RAW,
     STORE_STATUS_ONLINE_RAW,
@@ -53,7 +57,7 @@ _ROUTES = [
 
 
 class MockUberEatsClient:
-    def get(self, path: str, params: dict = None) -> dict:
+    def get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         for pattern, factory in _ROUTES:
             match = pattern.match(path)
             if match:
