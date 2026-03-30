@@ -1,11 +1,14 @@
+"""Modèles Pydantic pour les endpoints Store de l'API Uber Eats.
+
+Rôle : recevoir la réponse brute de l'API, aplatir les structures imbriquées,
+et ne conserver que les champs utiles au LLM via model_dump(exclude_none=True).
+"""
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 __all__ = ["StoreModel", "StoreStatusModel", "StoreListModel"]
 
 
 class ContactModel(BaseModel):
-    """Store owner contact information."""
-
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     name: str | None = None
@@ -14,8 +17,6 @@ class ContactModel(BaseModel):
 
 
 class AddressModel(BaseModel):
-    """Physical address of a store."""
-
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     street: str | None = Field(None, alias="street_address_line_one")
@@ -25,13 +26,6 @@ class AddressModel(BaseModel):
 
 
 class StoreModel(BaseModel):
-    """Filtered representation of an Uber Eats store.
-
-    Flattens nested API fields: location → address,
-    prep_times.default_value → prep_time_seconds,
-    uber_merchant_type.type → merchant_type.
-    """
-
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     id: str | None = None
@@ -47,16 +41,20 @@ class StoreModel(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def extract_fields(cls, values: dict) -> dict:
-        # Map location → address
+        # Certains endpoints retournent "store_id" au lieu de "id"
+        if "store_id" in values and "id" not in values:
+            values["id"] = values["store_id"]
+
+        # L'adresse est imbriquée sous "location" dans la réponse API
         if "location" in values and "address" not in values:
             values["address"] = values["location"]
 
-        # Extract prep time
+        # Temps de préparation : {"prep_times": {"default_value": 900}}
         prep_times = values.get("prep_times") or {}
         if isinstance(prep_times, dict):
             values["prep_time_seconds"] = prep_times.get("default_value")
 
-        # Extract merchant type
+        # Type de commerce : {"uber_merchant_type": {"type": "RESTAURANT"}}
         merchant_type_obj = values.get("uber_merchant_type") or {}
         if isinstance(merchant_type_obj, dict):
             values["merchant_type"] = merchant_type_obj.get("type")
@@ -65,8 +63,6 @@ class StoreModel(BaseModel):
 
 
 class StoreStatusModel(BaseModel):
-    """Online/offline status of a store."""
-
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     status: str | None = None
@@ -77,15 +73,15 @@ class StoreStatusModel(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def extract_fields(cls, values: dict) -> dict:
+        # Calcul du booléen is_online à partir du champ status
         values["is_online"] = values.get("status") == "ONLINE"
+        # Renommage des champs pour plus de clarté côté LLM
         values["offline_reason"] = values.get("reason")
         values["offline_until"] = values.get("is_offline_until")
         return values
 
 
 class StoreListModel(BaseModel):
-    """Paginated list of stores."""
-
     model_config = ConfigDict(extra="ignore")
 
     stores: list[StoreModel] | None = None
@@ -94,9 +90,11 @@ class StoreListModel(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def extract_fields(cls, values: dict) -> dict:
+        # L'API retourne la liste sous "data", on la remonte sous "stores"
         if "data" in values and "stores" not in values:
             values["stores"] = values["data"]
 
+        # Pagination : {"pagination_data": {"next_page_token": "..."}}
         pagination = values.get("pagination_data") or {}
         if isinstance(pagination, dict):
             values["next_page_token"] = pagination.get("next_page_token")

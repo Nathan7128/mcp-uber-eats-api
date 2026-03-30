@@ -1,18 +1,14 @@
-from typing import Any
+"""Modèles Pydantic pour les endpoints Promotions de l'API Uber Eats.
 
+Rôle : normaliser les différents types de promotions (FLATOFF, PERCENTOFF, BOGO…)
+en un modèle unifié avec un champ discount_details générique.
+"""
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 __all__ = ["PromotionModel", "PromotionListModel"]
 
 
 class PromotionModel(BaseModel):
-    """An Uber Eats promotional offer with type-specific discount details.
-
-    Flattens nested API fields: promo_type → type,
-    promotion_customization.user_group → target_customers,
-    and selects the correct discount sub-object into discount_details.
-    """
-
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     promotion_id: str | None = None
@@ -23,17 +19,18 @@ class PromotionModel(BaseModel):
     end_time: str | None = None
     currency_code: str | None = None
     target_customers: str | None = None
-    discount_details: Any | None = None
+    discount_details: dict | None = None
 
     @model_validator(mode="before")
     @classmethod
     def extract_fields(cls, values: dict) -> dict:
-        # Extract target customer group
+        # Cible clients : {"promotion_customization": {"user_group": "ALL_EATERS"}}
         customization = values.get("promotion_customization") or {}
         if isinstance(customization, dict):
             values["target_customers"] = customization.get("user_group")
 
-        # Extract type-specific discount details
+        # Chaque type de promotion a son propre sous-objet de remise dans la réponse API ;
+        # on le normalise dans discount_details pour simplifier la lecture par le LLM.
         promo_type = values.get("promo_type")
         discount_key = {
             "FLATOFF": "flat_off_discount",
@@ -49,8 +46,6 @@ class PromotionModel(BaseModel):
 
 
 class PromotionListModel(BaseModel):
-    """List of promotions for a store."""
-
     model_config = ConfigDict(extra="ignore")
 
     promotions: list[PromotionModel] | None = None

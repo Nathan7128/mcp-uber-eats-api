@@ -1,15 +1,18 @@
-import os
-from typing import Any
+"""Client HTTP pour l'API Uber Eats.
 
+Fournit `UberEatsClient` (requêtes authentifiées) et `UberEatsAPIError`
+(exception structurée pour tout statut HTTP non-2xx).
+"""
+import os
 import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
-DEFAULT_TIMEOUT = 30  # seconds
-
 
 class UberEatsAPIError(Exception):
+    """Exception levée pour tout statut HTTP non-2xx retourné par l'API Uber Eats."""
+
     def __init__(self, status_code: int, code: str, message: str, metadata: dict | None = None):
         self.status_code = status_code
         self.code = code
@@ -19,16 +22,7 @@ class UberEatsAPIError(Exception):
 
 
 class UberEatsClient:
-    """Base HTTP client for the Uber Eats API.
-
-    Handles authentication, session management, and error parsing.
-    All methods return the parsed JSON response as a dict.
-
-    Usage:
-        client = UberEatsClient()
-        stores = client.get("/v1/delivery/stores")
-        order  = client.get("/v1/delivery/order/order-xyz")
-    """
+    """Client HTTP avec session persistante et authentification Bearer automatique."""
 
     def __init__(self, token: str | None = None, base_url: str | None = None):
         self._token = token or os.getenv("UBER_EATS_API_TOKEN")
@@ -40,12 +34,7 @@ class UberEatsClient:
             "Content-Type": "application/json",
         })
 
-    # ------------------------------------------------------------------
-    # Low-level request helpers
-    # ------------------------------------------------------------------
-
     def _request(self, method: str, path: str, **kwargs) -> requests.Response:
-        kwargs.setdefault("timeout", DEFAULT_TIMEOUT)
         url = f"{self._base_url}{path}"
         response = self._session.request(method, url, **kwargs)
         self._raise_for_status(response)
@@ -54,6 +43,8 @@ class UberEatsClient:
     def _raise_for_status(self, response: requests.Response) -> None:
         if response.ok:
             return
+        # Tente de parser le corps JSON pour extraire code/message structurés ;
+        # repli sur un dict vide si le corps n'est pas du JSON valide.
         try:
             body = response.json()
         except ValueError:
@@ -65,19 +56,19 @@ class UberEatsClient:
             metadata=body.get("metadata", {}),
         )
 
-    def get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    def get(self, path: str, params: dict | None = None) -> dict:
         response = self._request("GET", path, params=params)
         if response.status_code == 204:
             return {}
         return response.json()
 
-    def post(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
+    def post(self, path: str, json: dict | None = None) -> dict:
         response = self._request("POST", path, json=json or {})
         if response.status_code == 204:
             return {}
         return response.json()
 
-    def delete(self, path: str) -> dict[str, Any]:
+    def delete(self, path: str) -> dict:
         response = self._request("DELETE", path)
         if response.status_code == 204:
             return {}

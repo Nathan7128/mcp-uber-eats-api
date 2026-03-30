@@ -1,11 +1,14 @@
+"""Modèles Pydantic pour les endpoints Order de l'API Uber Eats.
+
+Rôle : aplatir la structure imbriquée des commandes (clients, articles, livraisons)
+et ne conserver que les champs utiles au LLM via model_dump(exclude_none=True).
+"""
 from pydantic import BaseModel, ConfigDict, model_validator
 
 __all__ = ["OrderItemModel", "OrderModel", "OrderListModel"]
 
 
 class ModifierModel(BaseModel):
-    """A modifier group applied to an order item (e.g. 'Sauces': ['Ketchup', 'Mayo'])."""
-
     model_config = ConfigDict(extra="ignore")
 
     group: str | None = None
@@ -13,40 +16,32 @@ class ModifierModel(BaseModel):
 
 
 class OrderItemModel(BaseModel):
-    """A single item in a customer order.
-
-    Flattens nested API fields: title → name,
-    quantity.amount → quantity,
-    customer_request → special_instructions,
-    selected_modifier_groups → modifiers.
-    """
-
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     id: str | None = None
     name: str | None = None
-    quantity: float | None = None
+    quantity: int | None = None
     special_instructions: str | None = None
     modifiers: list[ModifierModel] | None = None
 
     @model_validator(mode="before")
     @classmethod
     def extract_fields(cls, values: dict) -> dict:
-        # name from title
+        # L'API utilise "title" pour le nom de l'article
         if "title" in values and "name" not in values:
             values["name"] = values["title"]
 
-        # quantity from nested quantity.amount
+        # La quantité est imbriquée : {"quantity": {"amount": 2}}
         qty_obj = values.get("quantity") or {}
         if isinstance(qty_obj, dict):
             values["quantity"] = qty_obj.get("amount")
 
-        # special_instructions from customer_request
+        # Instructions spéciales : {"customer_request": {"special_instructions": "..."}}
         cr = values.get("customer_request") or {}
         if isinstance(cr, dict):
             values["special_instructions"] = cr.get("special_instructions")
 
-        # modifiers from selected_modifier_groups
+        # Modificateurs : aplatit selected_modifier_groups en {group, options[]}
         mods = []
         for mg in values.get("selected_modifier_groups") or []:
             if isinstance(mg, dict):
@@ -63,12 +58,6 @@ class OrderItemModel(BaseModel):
 
 
 class OrderModel(BaseModel):
-    """Full order details including customer info, items, and delivery status.
-
-    Flattens nested API fields: customers[] → customer_name/customer_phone,
-    carts[].items[] → items, deliveries[0].status → delivery_status.
-    """
-
     model_config = ConfigDict(extra="ignore")
 
     id: str | None = None
@@ -79,7 +68,7 @@ class OrderModel(BaseModel):
     customer_name: str | None = None
     customer_phone: str | None = None
     items: list[OrderItemModel] | None = None
-    item_count: int | None = None
+    item_count: int = 0
     created_time: str | None = None
     ready_for_pickup_time: str | None = None
     store_instructions: str | None = None
@@ -88,7 +77,8 @@ class OrderModel(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def extract_fields(cls, values: dict) -> dict:
-        # Extract primary customer info
+        # Extraction du client principal depuis customers[]
+        # Structure : [{"is_primary_customer": true, "name": {...}, "contact": {"phone": {"number": "..."}}}]
         customers = values.get("customers") or []
         if customers:
             primary = next(
@@ -109,7 +99,7 @@ class OrderModel(BaseModel):
                     if isinstance(phone_obj, dict):
                         values["customer_phone"] = phone_obj.get("number")
 
-        # Extract items from all carts and compute item_count
+        # Aplatit carts[].items[] en une liste plate et calcule le total d'articles
         all_items = []
         total_count = 0
         for cart in values.get("carts") or []:
@@ -124,7 +114,7 @@ class OrderModel(BaseModel):
             values["items"] = all_items
         values["item_count"] = total_count
 
-        # Extract delivery status from first delivery
+        # Statut de livraison depuis le premier élément de deliveries[]
         deliveries = values.get("deliveries") or []
         if deliveries and isinstance(deliveries[0], dict):
             values["delivery_status"] = deliveries[0].get("status")
@@ -133,8 +123,6 @@ class OrderModel(BaseModel):
 
 
 class OrderListModel(BaseModel):
-    """Paginated list of orders for a store."""
-
     model_config = ConfigDict(extra="ignore")
 
     orders: list[OrderModel] | None = None
@@ -144,7 +132,7 @@ class OrderListModel(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def extract_fields(cls, values: dict) -> dict:
-        # Unwrap RestaurantOrder wrappers: {"order": {...}}
+        # L'API enveloppe chaque commande : data = [{"order": {...}}, ...]
         raw_data = values.get("data") or []
         orders = []
         for entry in raw_data:
@@ -155,7 +143,7 @@ class OrderListModel(BaseModel):
         if orders:
             values["orders"] = orders
 
-        # Extract pagination
+        # Pagination : {"pagination_data": {"next_page_token": "...", "total_count": 42}}
         pagination = values.get("pagination_data") or {}
         if isinstance(pagination, dict):
             values["next_page_token"] = pagination.get("next_page_token")
