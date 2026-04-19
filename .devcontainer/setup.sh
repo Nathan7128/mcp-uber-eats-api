@@ -59,25 +59,3 @@ check_var() {
         printf "      %-35s [OK]\n" "$name"
     fi
 }
-
-echo "      -- LLM --"
-check_var "LLM_MODEL"          ""
-check_var "OLLAMA_MODEL"       ""
-check_var "OLLAMA_API_BASE"    ""
-echo "      -- Uber Eats (optionnels en mode mock) --"
-check_var "UBER_EATS_API_TOKEN"      "YOUR_UBER_EATS_API_TOKEN"
-check_var "UBER_EATS_CLIENT_ID"      "YOUR_UBER_EATS_CLIENT_ID"
-check_var "UBER_EATS_CLIENT_SECRET"  "YOUR_UBER_EATS_CLIENT_SECRET"
-
-# ── 4. Modele Ollama ───────────────────────────────────
-echo ""
-echo "[4/4] Telechargement du modele Ollama..."
-bash .devcontainer/pull-model.sh
-
-# ── Fin ────────────────────────────────────────────────
-echo ""
-echo "==================================================="
-echo "   Setup termine !"
-echo "   Lancez : bash start.sh"
-echo "==================================================="
-echo ""
