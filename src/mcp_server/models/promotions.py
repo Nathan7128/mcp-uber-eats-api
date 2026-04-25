@@ -1,6 +1,8 @@
-from __future__ import annotations
+"""Modèles Pydantic pour les endpoints Promotions de l'API Uber Eats.
 
-from typing import Optional, List, Any
+Rôle : normaliser les différents types de promotions (FLATOFF, PERCENTOFF, BOGO…)
+en un modèle unifié avec un champ discount_details générique.
+"""
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 __all__ = ["PromotionModel", "PromotionListModel"]
@@ -9,25 +11,26 @@ __all__ = ["PromotionModel", "PromotionListModel"]
 class PromotionModel(BaseModel):
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
-    promotion_id: Optional[str] = None
-    store_id: Optional[str] = None
-    type: Optional[str] = Field(None, alias="promo_type")
-    state: Optional[str] = None
-    start_time: Optional[str] = None
-    end_time: Optional[str] = None
-    currency_code: Optional[str] = None
-    target_customers: Optional[str] = None
-    discount_details: Optional[Any] = None
+    promotion_id: str | None = None
+    store_id: str | None = None
+    type: str | None = Field(None, alias="promo_type")
+    state: str | None = None
+    start_time: str | None = None
+    end_time: str | None = None
+    currency_code: str | None = None
+    target_customers: str | None = None
+    discount_details: dict | None = None
 
     @model_validator(mode="before")
     @classmethod
     def extract_fields(cls, values: dict) -> dict:
-        # Extract target customer group
+        # Cible clients : {"promotion_customization": {"user_group": "ALL_EATERS"}}
         customization = values.get("promotion_customization") or {}
         if isinstance(customization, dict):
             values["target_customers"] = customization.get("user_group")
 
-        # Extract type-specific discount details
+        # Chaque type de promotion a son propre sous-objet de remise dans la réponse API ;
+        # on le normalise dans discount_details pour simplifier la lecture par le LLM.
         promo_type = values.get("promo_type")
         discount_key = {
             "FLATOFF": "flat_off_discount",
@@ -45,4 +48,4 @@ class PromotionModel(BaseModel):
 class PromotionListModel(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    promotions: Optional[List[PromotionModel]] = None
+    promotions: list[PromotionModel] | None = None

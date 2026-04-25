@@ -1,15 +1,23 @@
-"""MCP Tools for the Uber Eats API — read-only operations for restaurateurs."""
+"""Outils MCP exposés au LLM — opérations en lecture seule sur l'API Uber Eats.
+
+Chaque outil suit le même pattern :
+  1. Appel client.get() vers l'endpoint correspondant
+  2. Validation et nettoyage via le modèle Pydantic
+  3. Retour du dict filtré via .model_dump(exclude_none=True)
+"""
 import os
 
 from fastmcp import FastMCP
 
 from mcp_server.client import UberEatsClient
-from mcp_server.models.stores import StoreModel, StoreStatusModel, StoreListModel
-from mcp_server.models.orders import OrderModel, OrderListModel
-from mcp_server.models.promotions import PromotionModel, PromotionListModel
+from mcp_server.models import (
+    StoreModel, StoreListModel, StoreStatusModel, OrderModel, OrderListModel, PromotionModel, PromotionListModel
+)
+from mcp_server.mocks import MockUberEatsClient
 
-if os.getenv("MOCK_API", "").lower() in {"1", "true", "yes"}:
-    from mcp_server.mock_client import MockUberEatsClient
+# Le client est instancié au niveau du module car tools.py est importé une seule fois.
+use_mock_env = os.getenv("USE_MOCK", "false").lower()
+if use_mock_env == "true":
     client = MockUberEatsClient()
 else:
     client = UberEatsClient()
@@ -33,8 +41,8 @@ def list_stores(
 
 @mcp.tool(
     description=(
-        "Récupère les informations d'un restaurant (horaires, adresse, configuration). "
-        "Le paramètre expand accepte les valeurs : MENU, HOURS."
+        "Récupère les détails d'un restaurant (horaires, adresse, configuration). "
+        "Le paramètre expand accepte : MENU, HOURS."
     )
 )
 def get_store(
@@ -57,7 +65,7 @@ def get_store_status(store_id: str) -> dict:
 
 
 @mcp.tool(
-    description="Récupère tous les détails d'une commande (articles, prix, client, statut)."
+    description="Récupère les détails complets d'une commande (articles, prix, client, statut)."
 )
 def get_order(
     order_id: str,
@@ -67,15 +75,15 @@ def get_order(
     if expand:
         params["expand"] = ",".join(expand)
     data = client.get(f"/v1/delivery/order/{order_id}", params=params or None)
-    order_data = data.get("order", data)
-    return OrderModel.model_validate(order_data).model_dump(exclude_none=True)
+    # L'API enveloppe la commande dans {"order": {...}} — on dépaquète avant validation.
+    return OrderModel.model_validate(data.get("order", data)).model_dump(exclude_none=True)
 
 
 @mcp.tool(
     description=(
-        "Liste les commandes d'un restaurant. Filtrable par statut ou période (max 60 jours). "
-        "Valeurs possibles pour state : CREATED, OFFERED, ACCEPTED, HANDED_OFF, SUCCEEDED, FAILED. "
-        "Valeurs possibles pour status : SCHEDULED, ACTIVE, COMPLETED."
+        "Liste les commandes d'un restaurant. Filtrable par état ou plage horaire (max 60 jours). "
+        "Valeurs valides pour state : CREATED, OFFERED, ACCEPTED, HANDED_OFF, SUCCEEDED, FAILED. "
+        "Valeurs valides pour status : SCHEDULED, ACTIVE, COMPLETED."
     )
 )
 def list_store_orders(

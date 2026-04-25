@@ -12,9 +12,11 @@
       "Bash(wc -l /home/nathan/git/wrapper-uber-eats-api/app/models/*.py)",
       "Bash(~/.local/bin/uv sync:*)",
       "mcp__context7__query-docs",
-      "Bash(find /home/nathan/git/mcp-uber-eats-api -type f -exec ls -lh {})",
-      "Bash(sort -k2)",
-      "Bash(grep -r \"import\\\\|from\" /home/nathan/git/mcp-uber-eats-api/mcp_server/*.py)"
+      "Bash(cat:*)",
+      "Bash(~/.local/bin/uv pip:*)",
+      "Bash(USE_MOCK=true uv run python -m mcp_server.server --mock)",
+      "Bash(kill %1)",
+      "Bash(wait)"
     ]
   },
   "enabledMcpjsonServers": [

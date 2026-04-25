@@ -1,171 +1,88 @@
-# CLAUDE.md — poc-mcp
+# CLAUDE.md — mcp-uber-eats-api
+
+Parle-moi toujours en français.
 
 ## Contexte du projet
 
-Serveur MCP Python exposant des outils de lecture de l'API Uber Eats, destiné à être intégré dans une plateforme de chatbots/RAG utilisée par des restaurateurs.
+Chatbot agentic combinant un serveur **MCP** (FastMCP) qui expose les endpoints de l'API **Uber Eats Marketplace** sous forme d'outils, et une boucle agentic **LiteLLM** qui les utilise pour répondre aux prompts utilisateur.
 
-**Environnement :**
-- Python 3.12+
-- Dépendances : `fastmcp>=3.1.0`, `requests>=2.32.5`, `pydantic>=2.0.0`, `python-dotenv>=1.0.0`
-- Gestionnaire de packages : `uv` (fichier `uv.lock` présent)
-- Binaire uv installé dans `~/.local/bin/uv` (à ajouter au PATH si absent)
+- **Cible** : restaurateurs / commerçants disposant d'une API key Uber Eats.
+- **Orchestration** : tout passe par `main.py` (REPL conversationnel).
+- **Mode mock** : un client simulé avec données synthétiques (`src/mcp_server/mocks/`) permet de tester sans API réelle.
 
-**Démarrage du serveur MCP :**
+## Environnement
+
+- **Python** 3.12+ (cf. `.python-version`)
+- **Gestionnaire de packages** : `uv` (lock file `uv.lock` présent ; binaire dans `~/.local/bin/uv`)
+- **Dépendances clés** (cf. `pyproject.toml`) : `fastmcp>=2.2.0`, `litellm>=1.83.10`, `mcp>=1.27.0`, `dotenv>=0.9.9`
+- **Devcontainer** disponible dans `.devcontainer/` (avec `setup.sh` d'init)
+
+## Variables d'environnement (`.env`)
+
+LLM :
+- `LLM_MODEL` — modèle utilisé par LiteLLM (défaut : `groq/llama-3.3-70b-versatile`)
+- `GROQ_API_KEY` — clé API du provider (à adapter selon le LLM choisi)
+
+Uber Eats — utilisées :
+- `UBER_EATS_API_CALLS_DOMAIN` — base URL (sandbox : `https://test-api.uber.com`, prod : `https://api.uber.com`)
+- `UBER_EATS_API_TOKEN` — Bearer token actif
+
+Uber Eats — **présentes mais non utilisées actuellement** (réservées à un futur flux OAuth) :
+- `UBER_EATS_CLIENT_ID`, `UBER_EATS_CLIENT_SECRET`, `UBER_EATS_AUTHENT_DOMAIN`
+
+Runtime interne (pas dans `.env`) :
+- `USE_MOCK` — défini par `main.py` ou `server.py` avant l'import de `tools.py` pour basculer entre client réel et mock.
+
+## Démarrage
+
+Flux principal (chatbot) :
 ```bash
-uv run python -m mcp_server.server        # transport stdio (production)
-uv run fastmcp dev mcp_server/tools.py    # interface de debug FastMCP
+uv run python main.py    # REPL ; demande mock ou prod au lancement
+./start.sh               # idem, avec vérification des prérequis
 ```
 
-**Variables d'environnement** (fichier `.env`) :
-- `UBER_EATS_API_CALLS_DOMAIN` — base URL de l'API (sandbox : `https://test-api.uber.com`, prod : `https://api.uber.com`)
-- `UBER_EATS_API_TOKEN` — bearer token actif
-- `UBER_EATS_CLIENT_ID` / `UBER_EATS_CLIENT_SECRET` — credentials OAuth
-- `UBER_EATS_AUTHENT_DOMAIN` — domaine d'authentification OAuth
-
----
+Lancement direct du serveur MCP (utile pour usage hors-chatbot, debug ou intégration tierce ; pas le flux principal) :
+```bash
+uv run python -m mcp_server.server [--mock] [--transport stdio|sse|http] [--port N]
+uv run fastmcp dev src/mcp_server/tools.py    # interface de debug FastMCP
+```
 
 ## Structure du projet
 
-```
-mcp_server/
-├── __init__.py
-├── client.py         # client HTTP de base (session, auth, gestion d'erreurs)
-├── tools.py          # 7 outils MCP — entry point de la logique métier
-├── server.py         # entry point stdio : uv run python -m mcp_server.server
-└── models/
-    ├── __init__.py   # re-exporte tous les modèles
-    ├── stores.py     # StoreModel, StoreStatusModel, StoreListModel
-    ├── orders.py     # OrderItemModel, OrderModel, OrderListModel
-    └── promotions.py # PromotionModel, PromotionListModel
+Le code source est dans `src/`. Le point d'entrée `main.py` est à la racine.
 
-uber_eats_api_doc/
-├── openapi.json         # Store API
-├── openapi (1).json     # Order Fulfillment API
-└── openapi (4).json     # Promotions API
-```
+**`main.py`** — Charge `.env`, demande à l'utilisateur le mode (mock / prod), lance le serveur MCP en sous-processus stdio via `build_server_params`, et exécute la boucle conversationnelle via `run_agentic_loop`.
 
----
+### `src/mcp_server/`
 
-## Architecture
+- **`server.py`** — Expose `build_server_params(project_root, use_mock)` qui construit les `StdioServerParameters`. Set `USE_MOCK` *avant* d'importer `tools.py` (ordre critique).
+- **`tools.py`** — Instancie `FastMCP` et expose 7 outils :
+  - `list_stores`, `get_store`, `get_store_status`
+  - `list_store_orders`, `get_order`
+  - `list_store_promotions`, `get_promotion`
 
-### Client (`mcp_server/client.py`)
+  Le client utilisé (`UberEatsClient` ou `MockUberEatsClient`) est sélectionné à l'import en lisant `os.getenv("USE_MOCK")`.
+- **`client.py`** — `UberEatsClient` (session `requests` + Bearer token, méthodes `get` / `post` / `delete`) et `UberEatsAPIError` (exception structurée parsant le JSON d'erreur Uber Eats).
+- **`models/`** — Modèles Pydantic v2 : `orders.py`, `stores.py`, `promotions.py`. Tous utilisent `@model_validator(mode="before")` pour aplatir / remapper la structure imbriquée renvoyée par l'API (ex : `customers[]` → champs racine, `carts[].items[]` → liste plate, `selected_modifier_groups` → modifieurs simplifiés). Configurés en `extra="ignore"`.
+- **`mocks/`** — `MockUberEatsClient` (regex routing, `copy.deepcopy` à chaque appel pour éviter les mutations partagées) + `fixtures.py` (5 restaurants français, ~15 commandes, ~8 promotions). Seul `get` est implémenté.
 
-`UberEatsClient` gère :
-- La session `requests` avec header `Authorization: Bearer <token>` automatique
-- Les méthodes `get()`, `post()`, `delete()` qui retournent des `dict`
-- La levée de `UberEatsAPIError` (avec `status_code`, `code`, `message`, `metadata`) pour tout statut HTTP non-2xx
+### `src/llm/`
 
-```python
-from mcp_server.client import UberEatsClient, UberEatsAPIError
-client = UberEatsClient()  # lit le .env automatiquement
-data = client.get("/v1/delivery/stores")
-```
+- **`agent.py`** — `run_agentic_loop(session, messages, model)` (async). Charge les tools MCP via `litellm.experimental_mcp_client.load_mcp_tools`, appelle `litellm.acompletion`, et boucle tant que `finish_reason == "tool_calls"` en exécutant chaque appel via `experimental_mcp_client.call_openai_tool` puis en réinjectant le résultat dans `messages`. Log `[tool] nom(args)` à chaque appel.
 
-Le préfixe `Bearer` est ajouté automatiquement — ne pas l'inclure dans le token du `.env`.
+## Patterns clés
 
-### Modèles (`mcp_server/models/`)
+- **Sélection client au runtime** : `tools.py` lit `USE_MOCK` à l'import → toujours définir cette variable *avant* d'importer le module, sinon c'est le client réel qui sera instancié.
+- **Validation → dump** : chaque outil MCP retourne `Model.model_validate(data).model_dump(exclude_none=True)` pour livrer au LLM une structure plate et sans champs vides.
+- **Async partout** : `main.py` utilise `asyncio.run` ; `agent.py` est entièrement async (acompletion + session MCP).
 
-Rôle : recevoir la réponse brute de l'API Uber Eats, filtrer les champs pertinents pour le LLM, et retourner un dict propre via `.model_dump(exclude_none=True)`.
+## Pièges connus
 
-Tous les modèles héritent de `BaseModel` (Pydantic v2) avec `ConfigDict(extra="ignore")` — le bruit de l'API est automatiquement supprimé. Tous les champs sont `Optional` avec défaut `None`.
+- `USE_MOCK` doit impérativement être défini *avant* l'import de `tools.py`.
+- Aucun retry ni gestion silencieuse d'erreurs côté `UberEatsClient` — un token invalide lève `UberEatsAPIError`.
+- L'historique des messages s'accumule sans cap dans `main.py` : coûteux en tokens sur longues conversations.
+- `MockUberEatsClient` n'implémente que `get` (pas `post` / `delete`) ; tout outil futur en écriture devra étendre le mock.
 
-Les `@model_validator(mode="before")` sont utilisés pour aplatir les structures imbriquées de l'API :
-- `StoreModel` : extrait `address` depuis `location`, `prep_time_seconds` depuis `prep_times.default_value`, `merchant_type` depuis `uber_merchant_type.type`
-- `StoreStatusModel` : calcule `is_online` (bool), renomme `reason` → `offline_reason`, `is_offline_until` → `offline_until`
-- `StoreListModel` : mappe `data` → `stores`, extrait `next_page_token` depuis `pagination_data`
-- `OrderModel` : extrait `customer_name` et `customer_phone` depuis `customers[]`, aplatit `carts[].items[]` → `items`, calcule `item_count`, extrait `delivery_status` depuis `deliveries[0].status`
-- `OrderListModel` : dépaquète les wrappers `{"order": {...}}` dans `data[]`, extrait `next_page_token` et `total_count`
-- `PromotionModel` : mappe `promo_type` → `type`, extrait `target_customers` depuis `promotion_customization.user_group`, place le bon sous-objet de discount dans `discount_details`
+## Tests
 
-### Tools (`mcp_server/tools.py`)
-
-7 outils MCP enregistrés sur un `FastMCP(name="UberEatsAPIWrapper")`. Chaque outil :
-1. Appelle `client.get(path, params)` directement (pas de couche service)
-2. Parse avec le modèle : `Model.model_validate(data)`
-3. Retourne `.model_dump(exclude_none=True)`
-
-| Outil MCP | Endpoint API | Modèle |
-|-----------|-------------|--------|
-| `list_stores` | `GET /v1/delivery/stores` | `StoreListModel` |
-| `get_store` | `GET /v1/delivery/store/{store_id}` | `StoreModel` |
-| `get_store_status` | `GET /v1/delivery/store/{store_id}/status` | `StoreStatusModel` |
-| `get_order` | `GET /v1/delivery/order/{order_id}` | `OrderModel` |
-| `list_store_orders` | `GET /v1/delivery/store/{store_id}/orders` | `OrderListModel` |
-| `get_promotion` | `GET /v1/delivery/promotions/{promotion_id}` | `PromotionModel` |
-| `list_store_promotions` | `GET /v1/delivery/stores/{store_id}/promotions` | `PromotionListModel` |
-
-**Note :** `get_order` dépaquète le wrapper `{"order": {...}}` avant de valider : `data.get("order", data)`.
-
----
-
-## APIs couvertes
-
-| Fichier OpenAPI | API | Base URL |
-|-----------------|-----|----------|
-| `openapi.json` | Marketplace Store API | `https://api.uber.com` |
-| `openapi (1).json` | Order Fulfillment API | `https://api.uber.com` |
-| `openapi (4).json` | Marketplace Promotions API | `https://api.uber.com` |
-
-**Scopes OAuth :** `eats.store`, `eats.order`, `eats.store.orders.read`, `eats.store.promotion.write`
-
----
-
-## Intégration plateforme chatbot
-
-Transport **stdio**. Configuration côté plateforme :
-
-```json
-{
-  "mcpServers": {
-    "uber-eats": {
-      "command": "uv",
-      "args": ["run", "python", "-m", "mcp_server.server"],
-      "cwd": "/path/to/wrapper-uber-eats-api",
-      "env": {
-        "UBER_EATS_API_TOKEN": "...",
-        "UBER_EATS_API_CALLS_DOMAIN": "https://api.uber.com"
-      }
-    }
-  }
-}
-```
-
----
-
-## Stack LiteLLM (`src/llm/`)
-
-Module de test interactif du LLM connecté au serveur MCP, en boucle de conversation dans le terminal.
-
-**Démarrage :**
-```bash
-uv run python -m llm.main_litellm
-```
-
-**Variables d'environnement** supplémentaires (fichier `.env`) :
-- `GEMINI_API_KEY` — clé API Google AI Studio
-- `LLM_MODEL` — modèle LiteLLM à utiliser (défaut : `gemini/gemini-2.5-flash`)
-
-**Fonctionnement :**
-1. Lance le serveur MCP en subprocess via `stdio_client` (même transport qu'en production)
-2. Charge les outils MCP au démarrage via `experimental_mcp_client.load_mcp_tools`
-3. Boucle de conversation : lit un prompt → boucle agentique → affiche la réponse
-4. La boucle agentique gère les `tool_calls` : exécute chaque outil MCP et renvoie le résultat au LLM jusqu'à obtenir une réponse textuelle finale
-
-**Structure :**
-```
-llm/
-├── __init__.py
-└── main_litellm.py   # entry point : boucle REPL + boucle agentique MCP
-```
-
-**Packaging :** `hatchling` est utilisé comme build backend (`pyproject.toml`) pour exposer `src/mcp_server` et `src/llm` comme packages Python installables depuis la racine du projet.
-
----
-
-## Patterns à respecter
-
-- Pas de couche services — les tools appellent `client.get()` directement
-- Les nouveaux modèles héritent de `BaseModel` avec `ConfigDict(extra="ignore")`, tous les champs `Optional`
-- `mcp_server/models/__init__.py` doit être mis à jour à chaque nouveau modèle
-- Les nouveaux tools suivent le pattern : `client.get()` → `Model.model_validate(data)` → `.model_dump(exclude_none=True)`
-- Les descriptions des tools sont orientées restaurateur (pas technique)
+Aucun test automatisé à ce jour. Validation manuelle via le mode mock (prompts type : « Quels sont mes restaurants ? », « Liste les commandes ACCEPTED du Bistro du Coin »).

@@ -1,4 +1,7 @@
-"""Fake Uber Eats API responses mimicking sandbox/production structure."""
+"""Données de restaurants, commandes, etc., synthétiques afin de pouvoir tester le ChatBot
+si on a pas accès à l'API d'un restaurant."""
+
+from collections.abc import Callable
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Stores
@@ -23,8 +26,6 @@ STORE_RAW = {
     "auto_accept": False,
     "prep_times": {"default_value": 900},
     "uber_merchant_type": {"type": "RESTAURANT"},
-    "posId": "irrelevant",
-    "merchantUUID": "irrelevant",
 }
 
 STORE_PIZZERIA_RAW = {
@@ -111,45 +112,7 @@ STORE_CREPE_RAW = {
     "uber_merchant_type": {"type": "RESTAURANT"},
 }
 
-STORE_LIST_RAW = {
-    "data": [
-        STORE_RAW,
-        STORE_PIZZERIA_RAW,
-        STORE_SUSHI_RAW,
-        STORE_BURGER_RAW,
-        STORE_CREPE_RAW,
-    ],
-    "pagination_data": {"next_page_token": None, "total_count": 5},
-}
-
-STORE_LIST_EMPTY_RAW = {
-    "data": [],
-    "pagination_data": {},
-}
-
-STORE_STATUS_ONLINE_RAW = {
-    "status": "ONLINE",
-    "reason": None,
-    "is_offline_until": None,
-}
-
-STORE_STATUS_OFFLINE_RAW = {
-    "status": "OFFLINE",
-    "reason": "CLOSED",
-    "is_offline_until": "2026-03-15T18:00:00Z",
-}
-
-# Per-store statuses
-STORE_STATUSES = {
-    "store-abc-123": {"status": "ONLINE", "reason": None, "is_offline_until": None},
-    "store-def-456": {"status": "ONLINE", "reason": None, "is_offline_until": None},
-    "store-ghi-789": {"status": "ONLINE", "reason": None, "is_offline_until": None},
-    "store-jkl-012": {"status": "OFFLINE", "reason": "PAUSED_BY_MERCHANT", "is_offline_until": "2026-03-22T20:00:00Z"},
-    "store-mno-345": {"status": "ONLINE", "reason": None, "is_offline_until": None},
-}
-
-# Per-store lookup
-STORES_BY_ID = {
+STORES_BY_ID: dict[str, dict] = {
     "store-abc-123": STORE_RAW,
     "store-def-456": STORE_PIZZERIA_RAW,
     "store-ghi-789": STORE_SUSHI_RAW,
@@ -157,31 +120,30 @@ STORES_BY_ID = {
     "store-mno-345": STORE_CREPE_RAW,
 }
 
+STORE_LIST_RAW: dict[str, object] = {
+    "data": list(STORES_BY_ID.values()),
+    "pagination_data": {"next_page_token": None, "total_count": len(STORES_BY_ID)},
+}
+
+STORE_STATUS_ONLINE_RAW: dict[str, str | None] = {
+    "status": "ONLINE",
+    "reason": None,
+    "is_offline_until": None,
+}
+
+STORE_STATUSES: dict[str, dict[str, str | None]] = {
+    "store-abc-123": {"status": "ONLINE", "reason": None, "is_offline_until": None},
+    "store-def-456": {"status": "ONLINE", "reason": None, "is_offline_until": None},
+    "store-ghi-789": {"status": "ONLINE", "reason": None, "is_offline_until": None},
+    "store-jkl-012": {"status": "OFFLINE", "reason": "PAUSED_BY_MERCHANT", "is_offline_until": "2026-03-22T20:00:00Z"},
+    "store-mno-345": {"status": "ONLINE", "reason": None, "is_offline_until": None},
+}
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Orders
 # ──────────────────────────────────────────────────────────────────────────────
 
-ORDER_ITEM_RAW = {
-    "id": "item-001",
-    "title": "Burger Classique",
-    "quantity": {"amount": 2},
-    "customer_request": {"special_instructions": "Sans oignon"},
-    "selected_modifier_groups": [
-        {
-            "title": "Cuisson",
-            "selected_items": [{"title": "À point"}],
-        }
-    ],
-}
-
-ORDER_ITEM_SIMPLE_RAW = {
-    "id": "item-002",
-    "title": "Frites",
-    "quantity": {"amount": 1},
-}
-
-def _order_items():
-    """Bistro du Coin items — fresh copy each call."""
+def _order_items() -> list:
     return [
         {
             "id": "item-001",
@@ -196,7 +158,7 @@ def _order_items():
     ]
 
 
-def _pizza_items():
+def _pizza_items() -> list:
     return [
         {"id": "item-p01", "title": "Pizza Margherita", "quantity": {"amount": 1}},
         {
@@ -209,7 +171,7 @@ def _pizza_items():
     ]
 
 
-def _sushi_items():
+def _sushi_items() -> list:
     return [
         {"id": "item-s01", "title": "Plateau Sushi 24 pièces", "quantity": {"amount": 1}},
         {"id": "item-s02", "title": "Ramen Tonkotsu", "quantity": {"amount": 2}},
@@ -217,7 +179,7 @@ def _sushi_items():
     ]
 
 
-def _burger_items():
+def _burger_items() -> list:
     return [
         {
             "id": "item-b01",
@@ -232,7 +194,7 @@ def _burger_items():
     ]
 
 
-def _crepe_items():
+def _crepe_items() -> list:
     return [
         {
             "id": "item-c01",
@@ -245,16 +207,21 @@ def _crepe_items():
     ]
 
 
-def _order_inner(order_id="order-xyz-456", display_id="#1234", customer_name="Marie Martin",
-                 customer_phone="+33687654321", items_fn=None, state="ACCEPTED",
-                 fulfillment_type="DELIVERY", delivery_status="COURIER_ASSIGNED",
-                 created_time="2026-03-15T12:00:00Z", store_instructions=None):
-    """Return a fresh order dict each time — avoids in-place mutation by model validators."""
-    if items_fn is None:
-        items_fn = _order_items
-    first_name, *rest = customer_name.split(" ", 1)
-    last_name = rest[0] if rest else ""
-    order = {
+def _make_order(
+    order_id: str,
+    display_id: str,
+    customer_name: str,
+    customer_phone: str,
+    items_fn: Callable[[], list[dict]],
+    state: str,
+    fulfillment_type: str,
+    delivery_status: str,
+    created_time: str,
+    store_instructions: str | None = None,
+) -> dict:
+    """Return a raw order dict matching the Uber Eats API shape."""
+    first_name, _, last_name = customer_name.partition(" ")
+    order: dict = {
         "id": order_id,
         "display_id": display_id,
         "state": state,
@@ -274,99 +241,95 @@ def _order_inner(order_id="order-xyz-456", display_id="#1234", customer_name="Ma
         "carts": [{"items": items_fn()}],
         "deliveries": [{"status": delivery_status}],
         "created_time": created_time,
-        "ready_for_pickup_time": created_time.replace("T12:00", "T12:15").replace("T10:00", "T10:15").replace("T14:00", "T14:15").replace("T19:00", "T19:15").replace("T20:00", "T20:15"),
     }
     if store_instructions:
         order["store_instructions"] = store_instructions
     return order
 
 
-ORDER_INNER_RAW = _order_inner()
-
-# The API wraps the order in {"order": {...}}
-ORDER_RAW = {"order": _order_inner()}
-
 # ── Bistro du Coin (store-abc-123) ───────────────────────────────────────────
 
-ORDER_LIST_RAW = {
+ORDER_LIST_RAW: dict[str, object] = {
     "data": [
-        {"order": _order_inner("order-xyz-456", "#1234", "Marie Martin", "+33687654321",
-                               _order_items, "ACCEPTED", "DELIVERY", "COURIER_ASSIGNED",
-                               "2026-03-22T12:00:00Z", "Sonner à l'interphone")},
-        {"order": _order_inner("order-xyz-789", "#1235", "Paul Bernard", "+33698765432",
-                               _order_items, "ACCEPTED", "DELIVERY", "COURIER_PICKED_UP",
-                               "2026-03-22T12:30:00Z")},
-        {"order": _order_inner("order-xyz-999", "#1236", "Camille Petit", "+33611223344",
-                               _order_items, "SUCCEEDED", "PICKUP", "DELIVERED",
-                               "2026-03-22T11:00:00Z")},
+        {"order": _make_order("order-xyz-456", "#1234", "Marie Martin", "+33687654321",
+                              _order_items, "ACCEPTED", "DELIVERY", "COURIER_ASSIGNED",
+                              "2026-03-22T12:00:00Z", "Sonner à l'interphone")},
+        {"order": _make_order("order-xyz-789", "#1235", "Paul Bernard", "+33698765432",
+                              _order_items, "ACCEPTED", "DELIVERY", "COURIER_PICKED_UP",
+                              "2026-03-22T12:30:00Z")},
+        {"order": _make_order("order-xyz-999", "#1236", "Camille Petit", "+33611223344",
+                              _order_items, "SUCCEEDED", "PICKUP", "DELIVERED",
+                              "2026-03-22T11:00:00Z")},
     ],
     "pagination_data": {"next_page_token": None, "total_count": 3},
 }
 
+# Default ORDER_RAW: wraps the first bistro order as the API does
+ORDER_RAW: dict[str, dict] = ORDER_LIST_RAW["data"][0]  # type: ignore[index]
+
 # ── Pizzeria Napoli (store-def-456) ──────────────────────────────────────────
 
-ORDER_LIST_PIZZERIA_RAW = {
+ORDER_LIST_PIZZERIA_RAW: dict[str, object] = {
     "data": [
-        {"order": _order_inner("order-piz-001", "#2001", "Lucas Fontaine", "+33622334455",
-                               _pizza_items, "ACCEPTED", "DELIVERY", "COURIER_ASSIGNED",
-                               "2026-03-22T19:00:00Z", "Code portail : 4512")},
-        {"order": _order_inner("order-piz-002", "#2002", "Inès Moreau", "+33633445566",
-                               _pizza_items, "CREATED", "DELIVERY", "PENDING",
-                               "2026-03-22T19:20:00Z")},
-        {"order": _order_inner("order-piz-003", "#2003", "Tom Girard", "+33644556677",
-                               _pizza_items, "ACCEPTED", "PICKUP", "NOT_APPLICABLE",
-                               "2026-03-22T18:45:00Z")},
+        {"order": _make_order("order-piz-001", "#2001", "Lucas Fontaine", "+33622334455",
+                              _pizza_items, "ACCEPTED", "DELIVERY", "COURIER_ASSIGNED",
+                              "2026-03-22T19:00:00Z", "Code portail : 4512")},
+        {"order": _make_order("order-piz-002", "#2002", "Inès Moreau", "+33633445566",
+                              _pizza_items, "CREATED", "DELIVERY", "PENDING",
+                              "2026-03-22T19:20:00Z")},
+        {"order": _make_order("order-piz-003", "#2003", "Tom Girard", "+33644556677",
+                              _pizza_items, "ACCEPTED", "PICKUP", "NOT_APPLICABLE",
+                              "2026-03-22T18:45:00Z")},
     ],
     "pagination_data": {"next_page_token": None, "total_count": 3},
 }
 
 # ── Sushi Zen (store-ghi-789) ────────────────────────────────────────────────
 
-ORDER_LIST_SUSHI_RAW = {
+ORDER_LIST_SUSHI_RAW: dict[str, object] = {
     "data": [
-        {"order": _order_inner("order-sus-001", "#3001", "Amélie Dubois", "+33655667788",
-                               _sushi_items, "ACCEPTED", "DELIVERY", "COURIER_ASSIGNED",
-                               "2026-03-22T20:00:00Z")},
-        {"order": _order_inner("order-sus-002", "#3002", "Romain Leroy", "+33666778899",
-                               _sushi_items, "ACCEPTED", "DELIVERY", "COURIER_ASSIGNED",
-                               "2026-03-22T20:10:00Z", "Pas d'allergies")},
+        {"order": _make_order("order-sus-001", "#3001", "Amélie Dubois", "+33655667788",
+                              _sushi_items, "ACCEPTED", "DELIVERY", "COURIER_ASSIGNED",
+                              "2026-03-22T20:00:00Z")},
+        {"order": _make_order("order-sus-002", "#3002", "Romain Leroy", "+33666778899",
+                              _sushi_items, "ACCEPTED", "DELIVERY", "COURIER_ASSIGNED",
+                              "2026-03-22T20:10:00Z", "Pas d'allergies")},
     ],
     "pagination_data": {"next_page_token": None, "total_count": 2},
 }
 
 # ── Burger Palace (store-jkl-012) ────────────────────────────────────────────
 
-ORDER_LIST_BURGER_RAW = {
+ORDER_LIST_BURGER_RAW: dict[str, object] = {
     "data": [
-        {"order": _order_inner("order-bur-001", "#4001", "Jade Simon", "+33677889900",
-                               _burger_items, "SUCCEEDED", "DELIVERY", "DELIVERED",
-                               "2026-03-22T14:00:00Z")},
-        {"order": _order_inner("order-bur-002", "#4002", "Hugo Laurent", "+33688990011",
-                               _burger_items, "SUCCEEDED", "DELIVERY", "DELIVERED",
-                               "2026-03-22T13:00:00Z")},
-        {"order": _order_inner("order-bur-003", "#4003", "Chloé Mercier", "+33699001122",
-                               _burger_items, "ACCEPTED", "PICKUP", "NOT_APPLICABLE",
-                               "2026-03-22T14:30:00Z")},
+        {"order": _make_order("order-bur-001", "#4001", "Jade Simon", "+33677889900",
+                              _burger_items, "SUCCEEDED", "DELIVERY", "DELIVERED",
+                              "2026-03-22T14:00:00Z")},
+        {"order": _make_order("order-bur-002", "#4002", "Hugo Laurent", "+33688990011",
+                              _burger_items, "SUCCEEDED", "DELIVERY", "DELIVERED",
+                              "2026-03-22T13:00:00Z")},
+        {"order": _make_order("order-bur-003", "#4003", "Chloé Mercier", "+33699001122",
+                              _burger_items, "ACCEPTED", "PICKUP", "NOT_APPLICABLE",
+                              "2026-03-22T14:30:00Z")},
     ],
     "pagination_data": {"next_page_token": None, "total_count": 3},
 }
 
 # ── Crêperie Bretonne (store-mno-345) ────────────────────────────────────────
 
-ORDER_LIST_CREPE_RAW = {
+ORDER_LIST_CREPE_RAW: dict[str, object] = {
     "data": [
-        {"order": _order_inner("order-cre-001", "#5001", "Mathilde Rousseau", "+33611002233",
-                               _crepe_items, "ACCEPTED", "DELIVERY", "COURIER_ASSIGNED",
-                               "2026-03-22T12:00:00Z")},
-        {"order": _order_inner("order-cre-002", "#5002", "Antoine Blanchard", "+33622113344",
-                               _crepe_items, "CREATED", "DELIVERY", "PENDING",
-                               "2026-03-22T12:20:00Z", "Interphone 3B")},
+        {"order": _make_order("order-cre-001", "#5001", "Mathilde Rousseau", "+33611002233",
+                              _crepe_items, "ACCEPTED", "DELIVERY", "COURIER_ASSIGNED",
+                              "2026-03-22T12:00:00Z")},
+        {"order": _make_order("order-cre-002", "#5002", "Antoine Blanchard", "+33622113344",
+                              _crepe_items, "CREATED", "DELIVERY", "PENDING",
+                              "2026-03-22T12:20:00Z", "Interphone 3B")},
     ],
     "pagination_data": {"next_page_token": None, "total_count": 2},
 }
 
-# Per-store order lists
-ORDER_LISTS_BY_STORE = {
+ORDER_LISTS_BY_STORE: dict[str, dict[str, object]] = {
     "store-abc-123": ORDER_LIST_RAW,
     "store-def-456": ORDER_LIST_PIZZERIA_RAW,
     "store-ghi-789": ORDER_LIST_SUSHI_RAW,
@@ -374,44 +337,45 @@ ORDER_LISTS_BY_STORE = {
     "store-mno-345": ORDER_LIST_CREPE_RAW,
 }
 
+# Build per-order lookup from all store order lists
+ORDERS_BY_ID: dict[str, dict[str, dict]] = {
+    entry["order"]["id"]: entry
+    for store_orders in ORDER_LISTS_BY_STORE.values()
+    for entry in store_orders["data"]
+    if isinstance(entry.get("order"), dict)
+}
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Promotions
 # ──────────────────────────────────────────────────────────────────────────────
 
-PROMOTION_PERCENTOFF_RAW = {
-    "promotion_id": "promo-001",
-    "store_id": "store-abc-123",
-    "promo_type": "PERCENTOFF",
-    "state": "ACTIVE",
-    "start_time": "2026-03-01T00:00:00Z",
-    "end_time": "2026-03-31T23:59:59Z",
-    "currency_code": "EUR",
-    "promotion_customization": {"user_group": "ALL_EATERS"},
-    "percent_off_discount": {"discount_percentage": 20, "max_discount_value": 5000},
-    "flat_off_discount": None,
-    "bogo_discount": None,
-}
-
-PROMOTION_FLATOFF_RAW = {
-    "promotion_id": "promo-002",
-    "store_id": "store-abc-123",
-    "promo_type": "FLATOFF",
-    "state": "ACTIVE",
-    "start_time": "2026-03-01T00:00:00Z",
-    "end_time": "2026-03-31T23:59:59Z",
-    "currency_code": "EUR",
-    "promotion_customization": {"user_group": "NEW_EATERS"},
-    "flat_off_discount": {"discount_value": 300, "min_basket_value": 1500},
-    "percent_off_discount": None,
-}
-
-PROMOTION_LIST_RAW = {
-    "promotions": [PROMOTION_PERCENTOFF_RAW, PROMOTION_FLATOFF_RAW],
-}
-
-# Per-store promotions
-PROMOTIONS_BY_STORE = {
-    "store-abc-123": PROMOTION_LIST_RAW,
+PROMOTIONS_BY_STORE: dict[str, dict[str, list]] = {
+    "store-abc-123": {
+        "promotions": [
+            {
+                "promotion_id": "promo-001",
+                "store_id": "store-abc-123",
+                "promo_type": "PERCENTOFF",
+                "state": "ACTIVE",
+                "start_time": "2026-03-01T00:00:00Z",
+                "end_time": "2026-03-31T23:59:59Z",
+                "currency_code": "EUR",
+                "promotion_customization": {"user_group": "ALL_EATERS"},
+                "percent_off_discount": {"discount_percentage": 20, "max_discount_value": 5000},
+            },
+            {
+                "promotion_id": "promo-002",
+                "store_id": "store-abc-123",
+                "promo_type": "FLATOFF",
+                "state": "ACTIVE",
+                "start_time": "2026-03-01T00:00:00Z",
+                "end_time": "2026-03-31T23:59:59Z",
+                "currency_code": "EUR",
+                "promotion_customization": {"user_group": "NEW_EATERS"},
+                "flat_off_discount": {"discount_value": 300, "min_basket_value": 1500},
+            },
+        ]
+    },
     "store-def-456": {
         "promotions": [
             {
@@ -424,8 +388,6 @@ PROMOTIONS_BY_STORE = {
                 "currency_code": "EUR",
                 "promotion_customization": {"user_group": "ALL_EATERS"},
                 "percent_off_discount": {"discount_percentage": 15, "max_discount_value": 3000},
-                "flat_off_discount": None,
-                "bogo_discount": None,
             }
         ]
     },
@@ -441,7 +403,6 @@ PROMOTIONS_BY_STORE = {
                 "currency_code": "EUR",
                 "promotion_customization": {"user_group": "NEW_EATERS"},
                 "flat_off_discount": {"discount_value": 500, "min_basket_value": 2500},
-                "percent_off_discount": None,
             }
         ]
     },
@@ -457,10 +418,15 @@ PROMOTIONS_BY_STORE = {
                 "currency_code": "EUR",
                 "promotion_customization": {"user_group": "ALL_EATERS"},
                 "percent_off_discount": {"discount_percentage": 10, "max_discount_value": 2000},
-                "flat_off_discount": None,
-                "bogo_discount": None,
             }
         ]
     },
     "store-mno-345": {"promotions": []},
+}
+
+# Build per-promotion lookup from all store promotion lists
+PROMOTIONS_BY_ID: dict[str, dict] = {
+    promo["promotion_id"]: promo
+    for store_promos in PROMOTIONS_BY_STORE.values()
+    for promo in store_promos["promotions"]
 }
