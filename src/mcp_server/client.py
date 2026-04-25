@@ -22,12 +22,16 @@ class UberEatsAPIError(Exception):
 
 
 class UberEatsClient:
-    """Client HTTP avec session persistante et authentification Bearer automatique."""
+    """Client HTTP avec session persistante et authentification Bearer automatique.
+    
+    Implémentation très simple qui fournit les méthodes Get, Post & Delete.  
+    Permet également de gérer les erreurs et parser le contenu récupérer via une méthode."""
 
     def __init__(self, token: str | None = None, base_url: str | None = None):
         self._token = token or os.getenv("UBER_EATS_API_TOKEN")
         self._base_url = (base_url or os.getenv("UBER_EATS_API_CALLS_DOMAIN", "https://api.uber.com")).rstrip("/")
 
+        # Création de la session pour requêter l'API Uber Eats
         self._session = requests.Session()
         self._session.headers.update({
             "Authorization": f"Bearer {self._token}",

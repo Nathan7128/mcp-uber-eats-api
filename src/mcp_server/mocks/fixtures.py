@@ -1,4 +1,6 @@
-"""Fake Uber Eats API responses mimicking sandbox/production structure."""
+"""Données de restaurants, commandes, etc., synthétiques afin de pouvoir tester le ChatBot
+si on a pas accès à l'API d'un restaurant."""
+
 from collections.abc import Callable
 
 # ──────────────────────────────────────────────────────────────────────────────

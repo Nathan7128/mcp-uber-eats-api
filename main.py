@@ -1,22 +1,27 @@
 """Interface REPL en ligne de commande pour tester le LLM connecté au serveur MCP.
 
-Lance le serveur MCP en subprocess (stdio), charge les outils, puis démarre
+Lance le serveur MCP en sous-processus (stdio), charge les outils, puis démarre
 une boucle de conversation interactive dans le terminal.
 """
 import asyncio
 import os
 import sys
 from pathlib import Path
-
+import argparse
 from dotenv import load_dotenv
+
 from mcp.client.stdio import stdio_client
 from mcp import ClientSession
 
-from llm import build_server_params, run_agentic_loop
+from llm import run_agentic_loop
+from mcp_server import build_server_params
 
+
+# Load les variables d'environnement définies dans le fichier .env
 load_dotenv()
-
 MODEL = os.getenv("LLM_MODEL")
+
+# Racine du projet
 PROJECT_ROOT = str(Path(__file__).parent)
 
 SYSTEM_PROMPT = (
@@ -27,6 +32,7 @@ SYSTEM_PROMPT = (
 
 
 async def main() -> None:
+    # on demande à l'utilisateur s'il souhaite utililées les données synthétiques
     use_mock = input("Utiliser les données de test (mock) ? [o/N] : ").strip().lower() in {"o", "oui", "y", "yes"}
     mode = "mock" if use_mock else "API réelle"
     print(f"Connexion au serveur MCP (modèle : {MODEL}, données : {mode})...")

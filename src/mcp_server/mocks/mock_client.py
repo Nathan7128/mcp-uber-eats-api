@@ -1,8 +1,8 @@
-"""Mock client returning fixture data — used when MOCK_API=true."""
+"""Client synthétique utilisant les fakes données du fichier `fixtures.py`."""
 import copy
 import re
 
-from mcp_server.fixtures import (
+from mcp_server.mocks.fixtures import (
     STORE_LIST_RAW,
     STORE_STATUS_ONLINE_RAW,
     STORES_BY_ID,
@@ -14,7 +14,8 @@ from mcp_server.fixtures import (
     PROMOTIONS_BY_ID,
 )
 
-# Routes ordered from most specific to least specific
+# Synthétiques routes utilisées par le Mock client afin de remplacer les vrais route de l'API
+# Implémentation des méthodes Get seulement pour ce Mock client.
 _ROUTES = [
     # GET /v1/delivery/stores/{store_id}/promotions
     (re.compile(r"^/v1/delivery/stores/(?P<store_id>[^/]+)/promotions$"),
@@ -47,7 +48,15 @@ _ROUTES = [
 
 
 class MockUberEatsClient:
-    def get(self, path: str, params: dict | None = None) -> dict:
+    """Client synthétique permettant de simuler le comportement d'un vrai client qui serait connecté à l'API Uber Eats.  
+    
+    Utilise les données synthétiques du fichier `fixtures.py` et les fakes Routes définies au préalable.
+    Ce client est limité aux commandes Get.
+    """
+    
+    def get(self, path: str) -> dict:
+        # Parcours toutes les fakes Routes disponibles pour trouver celle qui correspond à celle passée en paramètre lors
+        # de l'appel du tools MCP.
         for pattern, factory in _ROUTES:
             match = pattern.match(path)
             if match:

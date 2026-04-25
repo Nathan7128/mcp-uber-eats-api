@@ -10,14 +10,13 @@ import os
 from fastmcp import FastMCP
 
 from mcp_server.client import UberEatsClient
-from mcp_server.models.stores import StoreModel, StoreStatusModel, StoreListModel
-from mcp_server.models.orders import OrderModel, OrderListModel
-from mcp_server.models.promotions import PromotionModel, PromotionListModel
+from mcp_server.models import (
+    StoreModel, StoreListModel, StoreStatusModel, OrderModel, OrderListModel, PromotionModel, PromotionListModel
+)
+from mcp_server.mocks import MockUberEatsClient
 
 # Le client est instancié au niveau du module car tools.py est importé une seule fois.
-# server.py positionne MOCK_API dans l'environnement AVANT cet import (import différé).
-if os.getenv("MOCK_API", "").lower() in {"1", "true", "yes"}:
-    from mcp_server.mock_client import MockUberEatsClient
+if os.getenv("USE_MOCK", "").lower() in {"1", "true", "yes"}:
     client = MockUberEatsClient()
 else:
     client = UberEatsClient()

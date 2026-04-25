@@ -1,26 +1,45 @@
 """Point d'entrée stdio du serveur MCP.
 
+Même si le serveur sera toujours lancé via le script main.py et connecté au LLM, j'ai considéré l'éventualité
+ou le serveur serait lancé à part via une ligne de commande, en parsant les arguments passés dans la ligne de commande.
+
 Usage :
     uv run python -m mcp_server.server              # API réelle
     uv run python -m mcp_server.server --mock       # données synthétiques
     uv run python -m mcp_server.server --transport sse --port 8080
 """
+
+import os
+import argparse
+from mcp import StdioServerParameters
+
+def build_server_params(use_mock: bool, project_root: str):
+    args = ["run", "python", "-m", "mcp_server.server"]
+    
+    if use_mock:
+        args.append("--mock")
+    
+    return StdioServerParameters(
+        command="uv",
+        args=args,
+        cwd=project_root,
+        env={**os.environ},
+    )
+
+
 if __name__ == "__main__":
-    import sys
-    import os
-    import argparse
+    # Lancement du serveur en se basant sur les arguments spécifiés aux préalable.
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--transport", default="stdio", choices=["stdio", "sse", "http"])
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--host", default="0.0.0.0")
-    parser.add_argument("--mock", action="store_true", help="Use synthetic mock data instead of the real API")
+    parser.add_argument("--mock", action="store_true", default=False)
     args = parser.parse_args()
-
-    if args.mock:
-        os.environ["MOCK_API"] = "1"
-
-    from mcp_server.tools import mcp  # Deferred import so MOCK_API is set in env before tools.py reads it
+    
+    os.environ["USE_MOCK"] = args.mock
+    # Import différé du MCP après avoir set la variable d'environnement "USE_MOCK"
+    from mcp_server.tools import mcp
 
     if args.transport == "stdio":
         mcp.run()
