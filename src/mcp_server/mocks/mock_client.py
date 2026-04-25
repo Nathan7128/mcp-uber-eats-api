@@ -54,7 +54,7 @@ class MockUberEatsClient:
     Ce client est limité aux commandes Get.
     """
     
-    def get(self, path: str) -> dict:
+    def get(self, path: str, params: dict | None = None) -> dict:
         # Parcours toutes les fakes Routes disponibles pour trouver celle qui correspond à celle passée en paramètre lors
         # de l'appel du tools MCP.
         for pattern, factory in _ROUTES:

@@ -16,7 +16,8 @@ from mcp_server.models import (
 from mcp_server.mocks import MockUberEatsClient
 
 # Le client est instancié au niveau du module car tools.py est importé une seule fois.
-if os.getenv("USE_MOCK", "").lower() in {"1", "true", "yes"}:
+use_mock_env = os.getenv("USE_MOCK", "false").lower()
+if use_mock_env == "true":
     client = MockUberEatsClient()
 else:
     client = UberEatsClient()

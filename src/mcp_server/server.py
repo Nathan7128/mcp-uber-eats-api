@@ -13,17 +13,16 @@ import os
 import argparse
 from mcp import StdioServerParameters
 
-def build_server_params(use_mock: bool, project_root: str):
+def build_server_params(project_root: str, use_mock: bool = False):
     args = ["run", "python", "-m", "mcp_server.server"]
-    
     if use_mock:
         args.append("--mock")
-    
+
     return StdioServerParameters(
         command="uv",
         args=args,
         cwd=project_root,
-        env={**os.environ},
+        env={**os.environ, "USE_MOCK": "true" if use_mock else "false"},
     )
 
 
@@ -34,10 +33,11 @@ if __name__ == "__main__":
     parser.add_argument("--transport", default="stdio", choices=["stdio", "sse", "http"])
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--host", default="0.0.0.0")
-    parser.add_argument("--mock", action="store_true", default=False)
+    parser.add_argument("--mock", action="store_true")
     args = parser.parse_args()
     
-    os.environ["USE_MOCK"] = args.mock
+    if args.mock:
+        os.environ["USE_MOCK"] = "true"
     # Import différé du MCP après avoir set la variable d'environnement "USE_MOCK"
     from mcp_server.tools import mcp
 

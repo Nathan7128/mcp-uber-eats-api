@@ -13,7 +13,10 @@
       "Bash(~/.local/bin/uv sync:*)",
       "mcp__context7__query-docs",
       "Bash(cat:*)",
-      "Bash(~/.local/bin/uv pip:*)"
+      "Bash(~/.local/bin/uv pip:*)",
+      "Bash(USE_MOCK=true uv run python -m mcp_server.server --mock)",
+      "Bash(kill %1)",
+      "Bash(wait)"
     ]
   },
   "enabledMcpjsonServers": [

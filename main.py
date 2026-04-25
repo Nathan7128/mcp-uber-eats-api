@@ -7,7 +7,6 @@ import asyncio
 import os
 import sys
 from pathlib import Path
-import argparse
 from dotenv import load_dotenv
 
 from mcp.client.stdio import stdio_client
@@ -37,7 +36,7 @@ async def main() -> None:
     mode = "mock" if use_mock else "API réelle"
     print(f"Connexion au serveur MCP (modèle : {MODEL}, données : {mode})...")
 
-    params = build_server_params(use_mock, PROJECT_ROOT)
+    params = build_server_params(PROJECT_ROOT, use_mock=use_mock)
 
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
