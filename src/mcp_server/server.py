@@ -22,7 +22,7 @@ def build_server_params(project_root: str, use_mock: bool = False):
         command="uv",
         args=args,
         cwd=project_root,
-        env={**os.environ, "USE_MOCK": "true" if use_mock else "false"},
+        env={**os.environ},
     )
 
 
